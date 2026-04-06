@@ -22,12 +22,11 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    // Достаем функции из глобальных объектов (вместо import)
     const { useState, useEffect, useMemo } = React;
     const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } = window.Recharts;
 
-    // ВСТАВЬТЕ ВАШУ ССЫЛКУ СЮДА:
-    const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTwdzIgy1UoiZ_C6vwRVvfeXCrdEbKO9P4jZJw9UJgVjA0sOypxrD9UR2OGsVvU6UJSlOVVpql9ZR6M/pub?gid=925397780&single=true&output=tsv';
+    // Ссылка исправлена на output=csv
+    const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTwdzIgy1UoiZ_C6vwRVvfeXCrdEbKO9P4jZJw9UJgVjA0sOypxrD9UR2OGsVvU6UJSlOVVpql9ZR6M/pub?gid=925397780&single=true&output=csv';
 
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -195,7 +194,6 @@
       );
     }
 
-    // Запускаем отрисовку
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<SalesDashboard />);
   </script>
