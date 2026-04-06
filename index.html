@@ -3,201 +3,222 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Дашборд Отдела Продаж</title>
+  <title>Дашборд (Vanilla JS)</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  
-  <script src="https://unpkg.com/react-is@18/umd/react-is.production.min.js" crossorigin></script>
-  
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
-  
-  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.min.js"></script>
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-50">
-  
-  <div id="root"></div>
+<body class="bg-gray-50 font-sans p-6">
 
-  <script type="text/babel">
-    const { useState, useEffect, useMemo } = React;
-    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } = window.Recharts;
+  <div class="max-w-7xl mx-auto">
+    
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <h1 class="text-2xl font-bold text-gray-800">Дашборд Отдела Продаж (Vanilla JS)</h1>
+      <div class="flex space-x-4 mt-4 md:mt-0">
+        <select id="monthSelect" class="border p-2 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+          <option value="Все">Все месяцы</option>
+          <option value="Март">Март</option>
+          <option value="Апрель">Апрель</option>
+        </select>
+        <select id="sellerSelect" class="border p-2 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+          <option value="Все">Все менеджеры</option>
+          <option value="Егор">Егор</option>
+          <option value="Александр">Александр</option>
+          <option value="Артем">Артем</option>
+          <option value="Дарья">Дарья</option>
+        </select>
+      </div>
+    </div>
 
-    // Ссылка на ваш CSV
-    const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTwdzIgy1UoiZ_C6vwRVvfeXCrdEbKO9P4jZJw9UJgVjA0sOypxrD9UR2OGsVvU6UJSlOVVpql9ZR6M/pub?gid=925397780&single=true&output=csv';
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+        <p class="text-sm text-gray-500 mb-1">Приведенная выручка</p>
+        <h3 id="kpi-revenue" class="text-2xl font-bold text-gray-800">0 ₽</h3>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+        <p class="text-sm text-gray-500 mb-1">Факт поступлений</p>
+        <h3 id="kpi-receipts" class="text-2xl font-bold text-gray-800">0 ₽</h3>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
+        <p class="text-sm text-gray-500 mb-1">Количество продаж</p>
+        <h3 id="kpi-sales" class="text-2xl font-bold text-gray-800">0</h3>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
+        <p class="text-sm text-gray-500 mb-1">Новых лидов</p>
+        <h3 id="kpi-leads" class="text-2xl font-bold text-gray-800">0</h3>
+      </div>
+    </div>
 
-    const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-
-    function SalesDashboard() {
-      const [rawData, setRawData] = useState([]);
-      const [isLoading, setIsLoading] = useState(true);
-      const [selectedSeller, setSelectedSeller] = useState('Все');
-      const [selectedMonth, setSelectedMonth] = useState('Все');
-
-      useEffect(() => {
-        Papa.parse(GOOGLE_SHEET_CSV_URL, {
-          download: true,
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            const formattedData = results.data.map(row => {
-              const rawDate = row['Дата отчета'] || row['Отметка времени'];
-              const dateObj = new Date(rawDate);
-              let capitalizedMonth = 'Неизвестно';
-              
-              if (!isNaN(dateObj)) {
-                const monthName = dateObj.toLocaleString('ru-RU', { month: 'long' });
-                capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-              }
-
-              const parseNumber = (val) => Number(String(val).replace(/\s/g, '').replace(',', '.')) || 0;
-
-              return {
-                date: rawDate || '',
-                month: capitalizedMonth,
-                seller: row['Имя продавца'] || 'Неизвестно',
-                leads: parseNumber(row['Новых лидов обработано за день']),
-                revenue: parseNumber(row['Выручка за день новая (в рублях)']),
-                sales: parseNumber(row['Количество продаж за день новые']),
-                receipts: parseNumber(row['Фактическое поступление денег за день (предоплаты / дебеты) в рублях']),
-              };
-            });
-
-            const validData = formattedData.filter(item => item.seller !== 'Неизвестно' && item.date);
-            setRawData(validData);
-            setIsLoading(false);
-          },
-          error: (error) => {
-            console.error("Ошибка загрузки данных:", error);
-            setIsLoading(false);
-          }
-        });
-      }, []);
-
-      const sellers = ['Все', ...new Set(rawData.map(item => item.seller))];
-      const months = ['Все', ...new Set(rawData.map(item => item.month))];
-
-      const filteredData = useMemo(() => {
-        return rawData.filter(item => {
-          const matchSeller = selectedSeller === 'Все' || item.seller === selectedSeller;
-          const matchMonth = selectedMonth === 'Все' || item.month === selectedMonth;
-          return matchSeller && matchMonth;
-        });
-      }, [selectedSeller, selectedMonth, rawData]);
-
-      const kpi = useMemo(() => {
-        return filteredData.reduce((acc, curr) => ({
-          revenue: acc.revenue + curr.revenue,
-          receipts: acc.receipts + curr.receipts,
-          sales: acc.sales + curr.sales,
-          leads: acc.leads + curr.leads
-        }), { revenue: 0, receipts: 0, sales: 0, leads: 0 });
-      }, [filteredData]);
-
-      const chartDataDaily = useMemo(() => {
-        const grouped = {};
-        filteredData.forEach(item => {
-          if (!grouped[item.date]) grouped[item.date] = { date: item.date, revenue: 0 };
-          grouped[item.date].revenue += item.revenue;
-        });
-        return Object.values(grouped).sort((a, b) => new Date(a.date) - new Date(b.date));
-      }, [filteredData]);
-
-      const chartDataSellers = useMemo(() => {
-        if (selectedSeller !== 'Все') return [];
-        const grouped = {};
-        filteredData.forEach(item => {
-          if (!grouped[item.seller]) grouped[item.seller] = { name: item.seller, value: 0 };
-          grouped[item.seller].value += item.revenue;
-        });
-        return Object.values(grouped);
-      }, [filteredData, selectedSeller]);
-
-      if (isLoading) {
-        return <div className="flex items-center justify-center min-h-screen text-xl text-gray-500">Загрузка данных из Google Таблиц...</div>;
-      }
-
-      return (
-        <div className="p-6 font-sans max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">Дашборд Отдела Продаж</h1>
-            <div className="flex space-x-4">
-              <select className="border p-2 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}>
-                {months.map(m => <option key={m} value={m}>{m === 'Все' ? 'Все месяцы' : m}</option>)}
-              </select>
-              <select className="border p-2 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer" value={selectedSeller} onChange={e => setSelectedSeller(e.target.value)}>
-                {sellers.map(s => <option key={s} value={s}>{s === 'Все' ? 'Все менеджеры' : s}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-              <p className="text-sm text-gray-500 mb-1">Приведенная выручка</p>
-              <h3 className="text-2xl font-bold text-gray-800">{kpi.revenue.toLocaleString('ru-RU')} ₽</h3>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-              <p className="text-sm text-gray-500 mb-1">Факт поступлений</p>
-              <h3 className="text-2xl font-bold text-gray-800">{kpi.receipts.toLocaleString('ru-RU')} ₽</h3>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
-              <p className="text-sm text-gray-500 mb-1">Количество продаж</p>
-              <h3 className="text-2xl font-bold text-gray-800">{kpi.sales}</h3>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
-              <p className="text-sm text-gray-500 mb-1">Новых лидов</p>
-              <h3 className="text-2xl font-bold text-gray-800">{kpi.leads}</h3>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm lg:col-span-2">
-              <h3 className="text-lg font-semibold text-gray-800 mb-6">Динамика выручки по дням</h3>
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartDataDaily}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="date" tick={{fontSize: 12}} />
-                    <YAxis tick={{fontSize: 12}} width={80} />
-                    <Tooltip cursor={{fill: '#f3f4f6'}} formatter={(value) => [`${value.toLocaleString('ru-RU')} ₽`, 'Выручка']} />
-                    <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {selectedSeller === 'Все' ? (
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-800 mb-6">Доля выручки</h3>
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={chartDataSellers} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                        {chartDataSellers.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip formatter={(value) => `${value.toLocaleString('ru-RU')} ₽`} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white p-6 rounded-xl shadow-sm flex flex-col items-center justify-center text-gray-400 text-center">
-                <p>Круговая диаграмма долей недоступна,</p>
-                <p>так как выбран один менеджер</p>
-              </div>
-            )}
-          </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <div class="bg-white p-6 rounded-xl shadow-sm lg:col-span-2">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Динамика выручки по дням</h3>
+        <div class="relative h-72 w-full">
+          <canvas id="barChart"></canvas>
         </div>
-      );
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-sm">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Доля выручки</h3>
+        <div id="pie-container" class="relative h-72 w-full flex items-center justify-center">
+          <canvas id="pieChart"></canvas>
+          <p id="pie-message" class="hidden text-gray-400 text-center">Выбран один менеджер. <br>Доли скрыты.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // 1. Генерируем случайные моковые данные
+    const sellers = ['Егор', 'Александр', 'Артем', 'Дарья'];
+    const months = { '03': 'Март', '04': 'Апрель' };
+    const rawData = [];
+
+    // Создаем 50 случайных записей
+    for (let i = 1; i <= 50; i++) {
+      const monthNum = Math.random() > 0.5 ? '03' : '04';
+      const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+      
+      rawData.push({
+        date: `2026-${monthNum}-${day}`,
+        month: months[monthNum],
+        seller: sellers[Math.floor(Math.random() * sellers.length)],
+        revenue: Math.floor(Math.random() * 200000) + 50000,  // От 50к до 250к
+        receipts: Math.floor(Math.random() * 150000) + 30000,
+        sales: Math.floor(Math.random() * 5) + 1,
+        leads: Math.floor(Math.random() * 20) + 5
+      });
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<SalesDashboard />);
+    // Переменные для хранения "экземпляров" графиков Chart.js
+    let myBarChart = null;
+    let myPieChart = null;
+    const chartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+
+    // 2. Главная функция обновления дашборда
+    function updateDashboard() {
+      // Считываем значения из выпадающих списков
+      const selectedMonth = document.getElementById('monthSelect').value;
+      const selectedSeller = document.getElementById('sellerSelect').value;
+
+      // ФИЛЬТРАЦИЯ: оставляем только те строки, которые подходят под фильтры
+      const filteredData = rawData.filter(item => {
+        const matchMonth = selectedMonth === 'Все' || item.month === selectedMonth;
+        const matchSeller = selectedSeller === 'Все' || item.seller === selectedSeller;
+        return matchMonth && matchSeller;
+      });
+
+      // СЧИТАЕМ KPI
+      let totalRevenue = 0, totalReceipts = 0, totalSales = 0, totalLeads = 0;
+      filteredData.forEach(item => {
+        totalRevenue += item.revenue;
+        totalReceipts += item.receipts;
+        totalSales += item.sales;
+        totalLeads += item.leads;
+      });
+
+      // ОБНОВЛЯЕМ ЦИФРЫ НА ЭКРАНЕ (обращаемся к HTML элементам по ID)
+      document.getElementById('kpi-revenue').innerText = totalRevenue.toLocaleString('ru-RU') + ' ₽';
+      document.getElementById('kpi-receipts').innerText = totalReceipts.toLocaleString('ru-RU') + ' ₽';
+      document.getElementById('kpi-sales').innerText = totalSales;
+      document.getElementById('kpi-leads').innerText = totalLeads;
+
+      // СТРОИМ ГРАФИКИ
+      drawBarChart(filteredData);
+      drawPieChart(filteredData, selectedSeller);
+    }
+
+    // 3. Функция отрисовки столбчатого графика (Динамика по дням)
+    function drawBarChart(data) {
+      // Группируем выручку по датам
+      const groupedByDate = {};
+      data.forEach(item => {
+        if (!groupedByDate[item.date]) groupedByDate[item.date] = 0;
+        groupedByDate[item.date] += item.revenue;
+      });
+
+      // Сортируем даты по порядку
+      const sortedDates = Object.keys(groupedByDate).sort();
+      const revenueValues = sortedDates.map(date => groupedByDate[date]);
+
+      // Удаляем старый график, если он был, чтобы нарисовать новый
+      if (myBarChart) myBarChart.destroy();
+
+      const ctx = document.getElementById('barChart').getContext('2d');
+      myBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sortedDates,
+          datasets: [{
+            label: 'Выручка (₽)',
+            data: revenueValues,
+            backgroundColor: '#3b82f6',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+        }
+      });
+    }
+
+    // 4. Функция отрисовки кругового графика (Доли менеджеров)
+    function drawPieChart(data, selectedSeller) {
+      const canvas = document.getElementById('pieChart');
+      const message = document.getElementById('pie-message');
+
+      // Если выбран конкретный менеджер, прячем график, показываем текст
+      if (selectedSeller !== 'Все') {
+        canvas.style.display = 'none';
+        message.classList.remove('hidden');
+        return;
+      } else {
+        canvas.style.display = 'block';
+        message.classList.add('hidden');
+      }
+
+      // Группируем выручку по менеджерам
+      const groupedBySeller = {};
+      data.forEach(item => {
+        if (!groupedBySeller[item.seller]) groupedBySeller[item.seller] = 0;
+        groupedBySeller[item.seller] += item.revenue;
+      });
+
+      const labels = Object.keys(groupedBySeller);
+      const values = Object.values(groupedBySeller);
+
+      // Удаляем старый график
+      if (myPieChart) myPieChart.destroy();
+
+      const ctx = canvas.getContext('2d');
+      myPieChart = new Chart(ctx, {
+        type: 'doughnut', // 'pie' для сплошного круга, 'doughnut' для бублика
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: chartColors,
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+        }
+      });
+    }
+
+    // 5. НАВЕШИВАЕМ СОБЫТИЯ НА ФИЛЬТРЫ
+    // Когда пользователь меняет селект, вызываем updateDashboard()
+    document.getElementById('monthSelect').addEventListener('change', updateDashboard);
+    document.getElementById('sellerSelect').addEventListener('change', updateDashboard);
+
+    // 6. ПЕРВЫЙ ЗАПУСК при загрузке страницы
+    updateDashboard();
+
   </script>
 </body>
 </html>
