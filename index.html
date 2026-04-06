@@ -1,0 +1,215 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import Papa from 'papaparse';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  PieChart, Pie, Cell, Legend 
+} from 'recharts';
+
+// 1. ВСТАВЬТЕ ВАШУ ССЫЛКУ СЮДА:
+const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/ВАШ_ИДЕНТИФИКАТОР/pub?gid=ВАШ_GID&single=true&output=csv';
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+export default function SalesDashboard() {
+  const [rawData, setRawData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedSeller, setSelectedSeller] = useState('Все');
+  const [selectedMonth, setSelectedMonth] = useState('Все');
+
+  // 2. Загрузка данных
+  useEffect(() => {
+    Papa.parse(GOOGLE_SHEET_CSV_URL, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const formattedData = results.data.map(row => {
+          // Получаем месяц из даты
+          const rawDate = row['Дата отчета'] || row['Отметка времени'];
+          const dateObj = new Date(rawDate);
+          let capitalizedMonth = 'Неизвестно';
+          
+          if (!isNaN(dateObj)) {
+            const monthName = dateObj.toLocaleString('ru-RU', { month: 'long' });
+            capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+          }
+
+          // Преобразуем строки в числа, убирая пробелы (например, "15 000" -> 15000)
+          const parseNumber = (val) => Number(String(val).replace(/\s/g, '').replace(',', '.')) || 0;
+
+          return {
+            date: rawDate || '',
+            month: capitalizedMonth,
+            seller: row['Имя продавца'] || 'Неизвестно',
+            leads: parseNumber(row['Новых лидов обработано за день']),
+            revenue: parseNumber(row['Выручка за день новая (в рублях)']),
+            sales: parseNumber(row['Количество продаж за день новые']),
+            receipts: parseNumber(row['Фактическое поступление денег за день (предоплаты / дебеты) в рублях']),
+          };
+        });
+
+        const validData = formattedData.filter(item => item.seller !== 'Неизвестно' && item.date);
+        setRawData(validData);
+        setIsLoading(false);
+      },
+      error: (error) => {
+        console.error("Ошибка загрузки данных:", error);
+        setIsLoading(false);
+      }
+    });
+  }, []);
+
+  // 3. Списки для фильтров
+  const sellers = ['Все', ...new Set(rawData.map(item => item.seller))];
+  const months = ['Все', ...new Set(rawData.map(item => item.month))];
+
+  // 4. Фильтрация данных
+  const filteredData = useMemo(() => {
+    return rawData.filter(item => {
+      const matchSeller = selectedSeller === 'Все' || item.seller === selectedSeller;
+      const matchMonth = selectedMonth === 'Все' || item.month === selectedMonth;
+      return matchSeller && matchMonth;
+    });
+  }, [selectedSeller, selectedMonth, rawData]);
+
+  // 5. Агрегация KPI
+  const kpi = useMemo(() => {
+    return filteredData.reduce((acc, curr) => ({
+      revenue: acc.revenue + curr.revenue,
+      receipts: acc.receipts + curr.receipts,
+      sales: acc.sales + curr.sales,
+      leads: acc.leads + curr.leads
+    }), { revenue: 0, receipts: 0, sales: 0, leads: 0 });
+  }, [filteredData]);
+
+  // 6. Подготовка данных для графика по дням
+  const chartDataDaily = useMemo(() => {
+    const grouped = {};
+    filteredData.forEach(item => {
+      if (!grouped[item.date]) grouped[item.date] = { date: item.date, revenue: 0 };
+      grouped[item.date].revenue += item.revenue;
+    });
+    return Object.values(grouped).sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [filteredData]);
+
+  // 7. Подготовка данных для круговой диаграммы (доли продавцов)
+  const chartDataSellers = useMemo(() => {
+    if (selectedSeller !== 'Все') return [];
+    const grouped = {};
+    filteredData.forEach(item => {
+      if (!grouped[item.seller]) grouped[item.seller] = { name: item.seller, value: 0 };
+      grouped[item.seller].value += item.revenue;
+    });
+    return Object.values(grouped);
+  }, [filteredData, selectedSeller]);
+
+  // Экран загрузки
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen text-xl text-gray-500">Загрузка данных из Google Таблиц...</div>;
+  }
+
+  // 8. Отрисовка интерфейса
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen font-sans">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* Шапка и фильтры */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">Дашборд Отдела Продаж</h1>
+          <div className="flex space-x-4">
+            <select 
+              className="border p-2 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              value={selectedMonth} 
+              onChange={e => setSelectedMonth(e.target.value)}
+            >
+              {months.map(m => <option key={m} value={m}>{m === 'Все' ? 'Все месяцы' : m}</option>)}
+            </select>
+            <select 
+              className="border p-2 rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              value={selectedSeller} 
+              onChange={e => setSelectedSeller(e.target.value)}
+            >
+              {sellers.map(s => <option key={s} value={s}>{s === 'Все' ? 'Все менеджеры' : s}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Карточки KPI */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+            <p className="text-sm text-gray-500 mb-1">Приведенная выручка</p>
+            <h3 className="text-2xl font-bold text-gray-800">{kpi.revenue.toLocaleString('ru-RU')} ₽</h3>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+            <p className="text-sm text-gray-500 mb-1">Факт поступлений</p>
+            <h3 className="text-2xl font-bold text-gray-800">{kpi.receipts.toLocaleString('ru-RU')} ₽</h3>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
+            <p className="text-sm text-gray-500 mb-1">Количество продаж</p>
+            <h3 className="text-2xl font-bold text-gray-800">{kpi.sales}</h3>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
+            <p className="text-sm text-gray-500 mb-1">Новых лидов</p>
+            <h3 className="text-2xl font-bold text-gray-800">{kpi.leads}</h3>
+          </div>
+        </div>
+
+        {/* Графики */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Динамика выручки (занимает 2 колонки) */}
+          <div className="bg-white p-6 rounded-xl shadow-sm lg:col-span-2">
+            <h3 className="text-lg font-semibold text-gray-800 mb-6">Динамика выручки по дням</h3>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartDataDaily}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" tick={{fontSize: 12}} />
+                  <YAxis tick={{fontSize: 12}} width={80} />
+                  <Tooltip 
+                    cursor={{fill: '#f3f4f6'}}
+                    formatter={(value) => [`${value.toLocaleString('ru-RU')} ₽`, 'Выручка']}
+                  />
+                  <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Доли менеджеров (показываем только если выбран фильтр "Все") */}
+          {selectedSeller === 'Все' ? (
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-800 mb-6">Доля выручки</h3>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartDataSellers}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {chartDataSellers.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value.toLocaleString('ru-RU')} ₽`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white p-6 rounded-xl shadow-sm flex flex-col items-center justify-center text-gray-400 text-center">
+              <p>Круговая диаграмма долей недоступна,</p>
+              <p>так как выбран один менеджер</p>
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+}
