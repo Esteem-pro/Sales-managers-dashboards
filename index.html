@@ -10,10 +10,12 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/react-is@18/umd/react-is.production.min.js" crossorigin></script>
   
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
-  <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+  
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.min.js"></script>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
@@ -25,7 +27,7 @@
     const { useState, useEffect, useMemo } = React;
     const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } = window.Recharts;
 
-    // Ссылка исправлена на output=csv
+    // Ссылка на ваш CSV
     const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTwdzIgy1UoiZ_C6vwRVvfeXCrdEbKO9P4jZJw9UJgVjA0sOypxrD9UR2OGsVvU6UJSlOVVpql9ZR6M/pub?gid=925397780&single=true&output=csv';
 
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
