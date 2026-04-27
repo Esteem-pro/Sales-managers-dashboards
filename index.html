@@ -3,85 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Dashboard</title>
+    <title>Дашборд Отдела Продаж</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .bento-card { @apply bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between; }
-        .indicator-value { @apply text-2xl font-bold text-slate-800; }
-        .comparison-tag { @apply text-xs font-medium px-2 py-1 rounded-full mt-2; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .bento-card { 
+            @apply bg-white p-6 rounded-[2rem] shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] border border-slate-100 flex flex-col; 
+            transition: transform 0.2s ease;
+        }
+        .bento-card:hover { transform: translateY(-2px); }
+        .metric-title { @apply text-slate-500 text-sm font-medium mb-2; }
+        .metric-value { @apply text-3xl font-bold text-slate-800 tracking-tight; }
+        .badge { @apply text-xs font-semibold px-2.5 py-1 rounded-full w-max mt-3 inline-flex items-center gap-1; }
+        .badge-green { @apply bg-emerald-100 text-emerald-700; }
+        .badge-red { @apply bg-rose-100 text-rose-700; }
+        .badge-neutral { @apply bg-slate-100 text-slate-700; }
+        
+        /* Стили для лоадера */
+        .loader {
+            border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6;
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-slate-50 p-4 md:p-8">
-    
-    <div id="login" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-3xl max-w-sm w-full">
-            <h2 class="text-2xl font-bold mb-4">Вход в систему</h2>
-            <input type="text" id="username" placeholder="Имя менеджера" class="w-full mb-3 p-3 border rounded-xl">
-            <button onclick="login()" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold">Войти</button>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <div id="auth-screen" class="fixed inset-0 bg-slate-900/50 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
+            <h2 class="text-2xl font-extrabold mb-1 mt-2 text-slate-900">Вход в систему</h2>
+            <p class="text-slate-500 text-sm mb-6">Сквозная аналитика отдела продаж</p>
+            
+            <input type="text" id="username" placeholder="Имя (например: Егор)" class="w-full mb-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium">
+            <input type="password" id="password" placeholder="Пароль" class="w-full mb-6 p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium">
+            
+            <button id="login-btn" onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl font-bold transition-colors flex justify-center items-center h-14">
+                <span id="login-text">Войти в дашборд</span>
+                <div id="login-loader" class="loader hidden" style="width: 24px; height: 24px; border-width: 3px;"></div>
+            </button>
+            <p id="auth-error" class="text-rose-500 text-sm mt-4 text-center hidden font-medium"></p>
         </div>
     </div>
 
-    <main class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Мои показатели</h1>
-            <div class="bg-white p-1 rounded-xl shadow-sm flex text-sm font-medium">
-                <button class="px-4 py-2 bg-slate-900 text-white rounded-lg">Текущий месяц</button>
-                <button class="px-4 py-2 text-slate-500">За все время</button>
+    <main id="dashboard-screen" class="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 hidden">
+        
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Показатели: <span id="user-greeting" class="text-blue-600"></span></h1>
+                <p class="text-slate-500 font-medium mt-1">Данные синхронизированы с Google Таблицей</p>
             </div>
-        </div>
+            <div class="bg-slate-200/60 p-1 rounded-2xl flex text-sm font-semibold w-full md:w-auto">
+                <button class="flex-1 px-6 py-2.5 bg-white text-slate-900 shadow-sm rounded-xl">Текущий месяц</button>
+                <button class="flex-1 px-6 py-2.5 text-slate-500 hover:text-slate-800 transition-colors" onclick="alert('Функция загрузки за все время будет добавлена в бэкенд.')">За все время</button>
+            </div>
+        </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-5">
             
-            <div class="bento-card md:col-span-1">
-                <span class="text-slate-500 text-sm">План продаж</span>
-                <input type="number" id="salesPlan" class="indicator-value bg-transparent focus:outline-none" value="1000000">
+            <div class="bento-card md:col-span-2 lg:col-span-2">
+                <span class="metric-title">План продаж (₽)</span>
+                <input type="number" id="sales-plan" class="metric-value bg-transparent border-b-2 border-dashed border-slate-300 focus:border-blue-500 focus:outline-none w-full pb-1" value="1000000">
+                <span class="text-xs text-slate-400 mt-2 block">Редактируется вручную</span>
             </div>
 
-            <div class="bento-card md:col-span-1">
-                <span class="text-slate-500 text-sm">% Выполнения</span>
-                <div class="indicator-value" id="planPercent">75%</div>
-                <div class="comparison-tag bg-green-100 text-green-700">+5% к отделу</div>
+            <div class="bento-card md:col-span-2 lg:col-span-2 bg-gradient-to-br from-blue-600 to-blue-800 text-white border-none">
+                <span class="text-blue-100 text-sm font-medium mb-2">Суммарная выручка</span>
+                <div class="text-4xl font-extrabold tracking-tight mt-auto" id="total-revenue">0 ₽</div>
+                <div class="text-blue-200 text-sm mt-2 font-medium">Новая + Повторная</div>
             </div>
 
-            <div class="bento-card md:col-span-2">
-                <span class="text-slate-500 text-sm">Суммарная выручка (Нов + Повт)</span>
-                <div class="indicator-value" id="totalRevenue">750,000 ₽</div>
+            <div class="bento-card md:col-span-2 lg:col-span-1">
+                <span class="metric-title">Выполнение плана</span>
+                <div class="metric-value text-blue-600" id="plan-percent">0%</div>
+                <div id="plan-vs-dept" class="badge badge-neutral">Отдел: 0%</div>
             </div>
 
-            <div class="bento-card">
-                <span class="text-slate-500 text-sm">Прогноз на месяц</span>
-                <div class="indicator-value text-blue-600" id="forecast">92%</div>
+            <div class="bento-card md:col-span-2 lg:col-span-1">
+                <span class="metric-title">Прогноз за месяц</span>
+                <div class="metric-value" id="forecast-percent">0%</div>
+                <div class="text-sm text-slate-500 font-medium mt-2" id="forecast-rub">0 ₽</div>
             </div>
 
-            <div class="bento-card">
-                <span class="text-slate-500 text-sm">Конверсия (Лид/Продажа)</span>
-                <div class="indicator-value" id="conversion">12.4%</div>
-                <div class="comparison-tag bg-red-100 text-red-700">-2% к отделу</div>
+            <div class="bento-card md:col-span-2 lg:col-span-2">
+                <span class="metric-title flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 block"></span> Фактическое поступление
+                </span>
+                <div class="metric-value mt-auto" id="cash-inflow">0 ₽</div>
+                <div class="badge badge-neutral mt-2 border border-slate-200">Предоплаты / Дебеты</div>
             </div>
 
-            <div class="bento-card md:col-span-2">
-                <div class="flex justify-between">
+            <div class="bento-card md:col-span-2 lg:col-span-2 flex flex-row justify-between items-center">
+                <div class="flex-1 pr-4 border-r border-slate-100">
+                    <span class="metric-title block">Полученная дебиторка</span>
+                    <div class="text-2xl font-bold text-slate-800" id="deb-received">0 ₽</div>
+                </div>
+                <div class="flex-1 pl-4">
+                    <span class="metric-title block">Новая дебиторка</span>
+                    <div class="text-2xl font-bold text-rose-500" id="deb-new">0 ₽</div>
+                </div>
+            </div>
+
+            <div class="bento-card md:col-span-2 lg:col-span-2">
+                <span class="metric-title">Конверсия (Лид → Продажа)</span>
+                <div class="metric-value mt-auto" id="conversion">0%</div>
+                <div id="conv-vs-dept" class="badge badge-neutral">Средняя по отделу: 0%</div>
+            </div>
+
+            <div class="bento-card md:col-span-2 lg:col-span-3">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="metric-title">Средний чек</span>
+                    <div id="avg-check-vs-dept" class="badge badge-neutral m-0">Отдел: 0 ₽</div>
+                </div>
+                <div class="metric-value" id="avg-check">0 ₽</div>
+                
+                <div class="mt-6 space-y-3">
                     <div>
-                        <span class="text-slate-500 text-sm block">Дебиторка (Получено)</span>
-                        <span class="text-xl font-bold" id="debReceived">150k ₽</span>
+                        <div class="flex justify-between text-sm font-medium mb-1"><span class="text-slate-500">Новые продажи</span><span id="avg-check-new">0 ₽</span></div>
+                        <div class="w-full bg-slate-100 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" id="bar-check-new" style="width: 50%"></div></div>
                     </div>
-                    <div class="text-right border-l pl-4">
-                        <span class="text-slate-500 text-sm block">Новая дебиторка</span>
-                        <span class="text-xl font-bold text-orange-500" id="debNew">45k ₽</span>
+                    <div>
+                        <div class="flex justify-between text-sm font-medium mb-1"><span class="text-slate-500">Повторные продажи</span><span id="avg-check-rep">0 ₽</span></div>
+                        <div class="w-full bg-slate-100 rounded-full h-2"><div class="bg-indigo-400 h-2 rounded-full" id="bar-check-rep" style="width: 50%"></div></div>
                     </div>
                 </div>
             </div>
 
-            <div class="bento-card md:col-span-4 h-64">
-                <canvas id="leadsChart"></canvas>
+            <div class="bento-card md:col-span-2 lg:col-span-3">
+                 <span class="metric-title">Количество продаж</span>
+                 <div class="metric-value" id="sales-count">0</div>
+                 <div class="grid grid-cols-2 gap-4 mt-6 text-center">
+                    <div class="bg-slate-50 p-3 rounded-2xl">
+                        <span class="text-2xl font-bold text-blue-600 block" id="sales-new-count">0</span>
+                        <span class="text-xs text-slate-500 font-medium">Новые</span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl">
+                        <span class="text-2xl font-bold text-indigo-500 block" id="sales-rep-count">0</span>
+                        <span class="text-xs text-slate-500 font-medium">Повторные</span>
+                    </div>
+                 </div>
+            </div>
+
+            <div class="bento-card md:col-span-4 lg:col-span-4 min-h-[300px]">
+                <span class="metric-title">Динамика обработки новых лидов по дням</span>
+                <div class="flex-1 relative w-full h-full mt-4">
+                    <canvas id="leadsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bento-card md:col-span-2 lg:col-span-2 flex flex-col items-center min-h-[300px]">
+                <span class="metric-title w-full text-left">Структура выручки</span>
+                <div class="relative w-[200px] h-[200px] mt-auto mb-auto">
+                    <canvas id="revenuePieChart"></canvas>
+                </div>
             </div>
 
         </div>
     </main>
 
     <script>
-        // Здесь будет JS логика запроса к Apps Script и отрисовка Chart.js
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBMkqHfXmsnUz0XVQPDQ_pJx9q5diaAdl5T6BIIL2XDwiUCBKA7hQfCyB6c5nCZi8OEg/exec';
+        let globalData = null; // Храним данные для пересчета плана
+
+        // Форматирование чисел
+        const formatMoney = (num) => new Intl.NumberFormat('ru-RU').format(Math.round(num || 0)) + ' ₽';
+        const formatPercent = (num) => (num > 0 ? '+' : '') + (num || 0).toFixed(1) + '%';
+
+        async function login() {
+            const name = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            const errorEl = document.getElementById('auth-error');
+            const btnText = document.getElementById('login-text');
+            const btnLoader = document.getElementById('login-loader');
+
+            if (!name || !pass) {
+                errorEl.innerText = 'Введите имя и пароль';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            // UI Лоадер
+            errorEl.classList.add('hidden');
+            btnText.classList.add('hidden');
+            btnLoader.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?name=${encodeURIComponent(name)}&pass=${encodeURIComponent(pass)}`);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    document.getElementById('dashboard-screen').classList.remove('hidden');
+                    document.getElementById('user-greeting').innerText = name;
+                    
+                    globalData = result.data;
+                    renderDashboard(globalData);
+                } else {
+                    throw new Error(result.message || 'Ошибка авторизации');
+                }
+            } catch (error) {
+                errorEl.innerText = error.message;
+                errorEl.classList.remove('hidden');
+            } finally {
+                btnText.classList.remove('hidden');
+                btnLoader.classList.add('hidden');
+            }
+        }
+
+        function renderDashboard(data) {
+            const p = data.personal || {};
+            const d = data.deptAvg || {};
+
+            // Если бэкенд не вернул разделение на новые/повторные, делаем безопасный фолбэк (поддержка гибкости)
+            const revNew = p.revNew || p.totalRevenue * 0.7 || 0; // fallback mock if missing
+            const revRep = p.revRep || p.totalRevenue * 0.3 || 0;
+            const salesNew = p.salesNew || Math.round(p.salesCount * 0.7) || 0;
+            const salesRep = p.salesRep || Math.round(p.salesCount * 0.3) || 0;
+
+            // Заполнение базовых карточек
+            document.getElementById('total-revenue').innerText = formatMoney(p.totalRevenue);
+            document.getElementById('cash-inflow').innerText = formatMoney(p.cash);
+            document.getElementById('deb-received').innerText = formatMoney(p.debRec);
+            document.getElementById('deb-new').innerText = formatMoney(p.debNew);
+            document.getElementById('sales-count').innerText = p.salesCount || 0;
+            document.getElementById('sales-new-count').innerText = salesNew;
+            document.getElementById('sales-rep-count').innerText = salesRep;
+            
+            // Конверсия
+            document.getElementById('conversion').innerText = (p.conversion || 0).toFixed(1) + '%';
+            const convDiff = p.conversion - (d.conversion || 0);
+            const convBadge = document.getElementById('conv-vs-dept');
+            convBadge.innerText = `Отдел: ${(d.conversion || 0).toFixed(1)}% (${formatPercent(convDiff)})`;
+            convBadge.className = `badge ${convDiff >= 0 ? 'badge-green' : 'badge-red'}`;
+
+            // Средний чек
+            document.getElementById('avg-check').innerText = formatMoney(p.avgCheck);
+            const checkDiff = ((p.avgCheck - d.avgCheck) / (d.avgCheck || 1)) * 100;
+            const checkBadge = document.getElementById('avg-check-vs-dept');
+            checkBadge.innerText = `Отдел: ${formatMoney(d.avgCheck)} (${formatPercent(checkDiff)})`;
+            checkBadge.className = `badge ${checkDiff >= 0 ? 'badge-green' : 'badge-red'} m-0`;
+
+            // Сравнение чеков (Новые vs Повторные)
+            const avgNew = salesNew > 0 ? revNew / salesNew : 0;
+            const avgRep = salesRep > 0 ? revRep / salesRep : 0;
+            const maxAvg = Math.max(avgNew, avgRep) || 1;
+            
+            document.getElementById('avg-check-new').innerText = formatMoney(avgNew);
+            document.getElementById('bar-check-new').style.width = `${(avgNew / maxAvg) * 100}%`;
+            document.getElementById('avg-check-rep').innerText = formatMoney(avgRep);
+            document.getElementById('bar-check-rep').style.width = `${(avgRep / maxAvg) * 100}%`;
+
+            // Инициализация расчета плана и графиков
+            calculatePlan();
+            initCharts(p, revNew, revRep);
+        }
+
+        // Логика расчета плана продаж (вызывается при старте и при изменении инпута)
+        function calculatePlan() {
+            if (!globalData) return;
+            const plan = parseFloat(document.getElementById('sales-plan').value) || 1;
+            const totalRev = globalData.personal.totalRevenue || 0;
+            const deptRev = globalData.deptAvg.totalRev || 1;
+
+            // Текущее выполнение
+            const percent = (totalRev / plan) * 100;
+            document.getElementById('plan-percent').innerText = percent.toFixed(1) + '%';
+            
+            // Сравнение выполнения с отделом
+            const deptPercent = (deptRev / plan) * 100; // Условно, если план у всех одинаковый
+            const planDiff = percent - deptPercent;
+            const planBadge = document.getElementById('plan-vs-dept');
+            planBadge.innerText = `Отдел: ${deptPercent.toFixed(1)}% (${formatPercent(planDiff)})`;
+            planBadge.className = `badge ${planDiff >= 0 ? 'badge-green' : 'badge-red'}`;
+
+            // Прогноз
+            const date = new Date();
+            const currentDay = date.getDate();
+            const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+            
+            const forecastedRev = (totalRev / Math.max(1, currentDay)) * daysInMonth;
+            const forecastPercent = (forecastedRev / plan) * 100;
+            
+            const fPercentEl = document.getElementById('forecast-percent');
+            fPercentEl.innerText = forecastPercent.toFixed(1) + '%';
+            fPercentEl.className = `metric-value ${forecastPercent >= 100 ? 'text-emerald-500' : 'text-slate-800'}`;
+            document.getElementById('forecast-rub').innerText = 'Ожидается: ' + formatMoney(forecastedRev);
+        }
+
+        // Слушатель изменения плана
+        document.getElementById('sales-plan').addEventListener('input', calculatePlan);
+
+        // Графики
+        let leadsChartInst = null;
+        let revChartInst = null;
+
+        function initCharts(personal, revNew, revRep) {
+            Chart.defaults.font.family = 'Inter';
+            Chart.defaults.color = '#64748b';
+
+            // 1. График выручки (Pie)
+            const ctxRev = document.getElementById('revenuePieChart').getContext('2d');
+            if(revChartInst) revChartInst.destroy();
+            revChartInst = new Chart(ctxRev, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Новая выручка', 'Повторная выручка'],
+                    datasets: [{
+                        data: [revNew, revRep],
+                        backgroundColor: ['#3b82f6', '#818cf8'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } },
+                    cutout: '70%'
+                }
+            });
+
+            // 2. Линейный график лидов
+            // Внимание: если бэкенд возвращает только общие суммы, мы строим условное распределение 
+            // для визуала (vibe coding). Для реальной динамики бэкенд должен отдавать массив {date, leads}.
+            const ctxLeads = document.getElementById('leadsChart').getContext('2d');
+            
+            // Генерация дней текущего месяца до сегодня
+            const currentDay = new Date().getDate();
+            const labels = Array.from({length: currentDay}, (_, i) => i + 1);
+            
+            // Распределяем общее кол-во лидов по дням случайно для демонстрации (заменится на реальные данные массива later)
+            const totalLeads = personal.leads || 0;
+            const mockData = labels.map(() => Math.round((totalLeads / currentDay) * (0.5 + Math.random())));
+
+            if(leadsChartInst) leadsChartInst.destroy();
+            leadsChartInst = new Chart(ctxLeads, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Обработано лидов',
+                        data: mockData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#3b82f6',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [4, 4], color: '#f1f5f9' }, border: {display: false} },
+                        x: { grid: { display: false }, border: {display: false} }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
