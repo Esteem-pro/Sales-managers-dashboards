@@ -11,21 +11,18 @@
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #f1f5f9; 
-            /* Фиксируем экран, чтобы убрать системный скролл и баги Chart.js */
             height: 100vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
         
-        /* Стеклянный эффект для шапки */
         .glass-header {
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(226, 232, 240, 0.8);
         }
 
-        /* Премиальные карточки */
         .bento-card { 
             background: #ffffff; 
             padding: 1.5rem; 
@@ -49,7 +46,6 @@
         .badge-red { background: #ffe4e6; color: #9f1239; }
         .badge-neutral { background: #f1f5f9; color: #475569; }
         
-        /* Кастомный скроллбар для основного контента */
         .scroll-area {
             flex: 1;
             overflow-y: auto;
@@ -111,10 +107,8 @@
 
                 <div class="bento-card relative">
                     <span class="metric-title">План продаж (₽)</span>
-                    <input type="number" id="sales-plan" class="metric-value w-full bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 focus:outline-none pb-1 mt-auto" value="1000000">
-                    <div class="absolute top-4 right-4 group">
-                        <svg class="w-4 h-4 text-slate-300 hover:text-blue-500 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                    </div>
+                    <div class="metric-value mt-auto" id="sales-plan">0 ₽</div>
+                    <span class="text-xs text-slate-400 mt-2 block">Синхронизировано с таблицей</span>
                 </div>
 
                 <div class="bento-card">
@@ -259,6 +253,10 @@
             const salesRep = p.salesRep || Math.round(p.salesCount * 0.3) || 0;
 
             document.getElementById('total-revenue').innerText = formatMoney(p.totalRevenue);
+            
+            // Выводим план из базы данных
+            document.getElementById('sales-plan').innerText = formatMoney(p.plan);
+            
             document.getElementById('cash-inflow').innerText = formatMoney(p.cash);
             document.getElementById('deb-received').innerText = formatMoney(p.debRec);
             document.getElementById('deb-new').innerText = formatMoney(p.debNew);
@@ -294,13 +292,17 @@
 
         function calculatePlan() {
             if (!globalData) return;
-            const plan = parseFloat(document.getElementById('sales-plan').value) || 1;
+            
+            // Теперь берем план не из инпута, а из JSON ответа бэкенда
+            const plan = globalData.personal.plan || 1; 
             const totalRev = globalData.personal.totalRevenue || 0;
-            const deptRev = globalData.deptAvg.totalRev || 1;
+            const deptRev = globalData.deptAvg.totalRev || 0;
 
             const percent = (totalRev / plan) * 100;
             document.getElementById('plan-percent').innerText = percent.toFixed(1) + '%';
             
+            // Сравнение выполнения с отделом (у отдела берем среднюю выручку и делим на план этого же менеджера, 
+            // так как у разных сотрудников могут быть разные планы)
             const deptPercent = (deptRev / plan) * 100; 
             const planDiff = percent - deptPercent;
             const planBadge = document.getElementById('plan-vs-dept');
@@ -319,8 +321,6 @@
             fPercentEl.className = `metric-value ${forecastPercent >= 100 ? 'text-emerald-500' : 'text-slate-800'}`;
             document.getElementById('forecast-rub').innerText = 'Ожидается: ' + formatMoney(forecastedRev);
         }
-
-        document.getElementById('sales-plan').addEventListener('input', calculatePlan);
 
         let leadsChartInst = null;
         let revChartInst = null;
