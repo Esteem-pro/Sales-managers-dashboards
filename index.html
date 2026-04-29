@@ -137,11 +137,17 @@
                     
                     <div class="mt-6 space-y-4">
                         <div>
-                            <div class="flex justify-between text-sm font-medium mb-1.5"><span class="text-slate-500">Новые продажи</span><span class="text-slate-800 font-bold" id="avg-check-new">0 ₽</span></div>
+                            <div class="flex justify-between text-sm font-medium mb-1.5">
+                                <span class="text-slate-500">Новые продажи <span class="text-xs font-normal text-slate-400 ml-1" id="dept-avg-check-new"></span></span>
+                                <span class="text-slate-800 font-bold" id="avg-check-new">0 ₽</span>
+                            </div>
                             <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div class="bg-blue-500 h-full rounded-full" id="bar-check-new" style="width: 0%"></div></div>
                         </div>
                         <div>
-                            <div class="flex justify-between text-sm font-medium mb-1.5"><span class="text-slate-500">Повторные продажи</span><span class="text-slate-800 font-bold" id="avg-check-rep">0 ₽</span></div>
+                            <div class="flex justify-between text-sm font-medium mb-1.5">
+                                <span class="text-slate-500">Повторные продажи <span class="text-xs font-normal text-slate-400 ml-1" id="dept-avg-check-rep"></span></span>
+                                <span class="text-slate-800 font-bold" id="avg-check-rep">0 ₽</span>
+                            </div>
                             <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div class="bg-indigo-400 h-full rounded-full" id="bar-check-rep" style="width: 0%"></div></div>
                         </div>
                     </div>
@@ -279,14 +285,17 @@
             const checkBadge = document.getElementById('avg-check-vs-dept');
             checkBadge.innerText = checkData.text; checkBadge.className = checkData.class;
 
+            // Вывод средних чеков (Новые/Повторные) и добавление сравнения с отделом
             const avgNew = p.salesNew > 0 ? p.revNew / p.salesNew : 0;
             const avgRep = p.salesRep > 0 ? p.revRep / p.salesRep : 0;
             const maxAvg = Math.max(avgNew, avgRep) || 1;
             
             document.getElementById('avg-check-new').innerText = formatMoney(avgNew);
+            document.getElementById('dept-avg-check-new').innerText = `(Отдел: ${formatMoney(d.avgCheckNew || 0)})`;
             setTimeout(() => { document.getElementById('bar-check-new').style.width = `${(avgNew / maxAvg) * 100}%`; }, 100);
             
             document.getElementById('avg-check-rep').innerText = formatMoney(avgRep);
+            document.getElementById('dept-avg-check-rep').innerText = `(Отдел: ${formatMoney(d.avgCheckRep || 0)})`;
             setTimeout(() => { document.getElementById('bar-check-rep').style.width = `${(avgRep / maxAvg) * 100}%`; }, 100);
 
             calculatePlan();
@@ -298,11 +307,9 @@
             const plan = globalData.personal.plan || 1; 
             const totalRev = globalData.personal.totalRevenue || 0;
             
-            // Расчет личного выполнения
             const percent = (totalRev / plan) * 100;
             document.getElementById('plan-percent').innerText = percent.toFixed(0) + '%';
             
-            // ИСПРАВЛЕНИЕ ЗДЕСЬ: Берем уже посчитанный правильный процент отдела из бэкенда
             const deptPercent = globalData.deptAvg.planPercent || 0; 
             const planData = buildComparisonText(percent, deptPercent, true);
             const planBadge = document.getElementById('plan-vs-dept');
