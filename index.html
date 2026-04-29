@@ -328,7 +328,7 @@
             initCharts(p);
         }
 
-        function calculatePlan() {
+               function calculatePlan() {
             if (!globalData) return;
             const plan = globalData.personal.plan || 1; 
             const totalRev = globalData.personal.totalRevenue || 0;
@@ -348,9 +348,16 @@
             
             const fPercentEl = document.getElementById('forecast-percent');
             fPercentEl.innerText = forecastPercent.toFixed(0) + '%'; 
-            fPercentEl.className = `metric-value ${forecastPercent >= 100 ? 'text-emerald-500' : 'text-slate-800'}`;
-            document.getElementById('forecast-rub').innerText = 'Ожидается: ' + formatMoney(forecastedRev);
+            
+            // Если прогноз >= 100% — зеленый, если < 100% — красный
+            fPercentEl.className = `metric-value ${forecastPercent >= 100 ? 'text-emerald-500' : 'text-rose-500'}`;
+            
+            const fRubEl = document.getElementById('forecast-rub');
+            fRubEl.innerText = 'Ожидается: ' + formatMoney(forecastedRev);
+            // Красим заодно и текст с ожидаемой суммой в рублях для наглядности
+            fRubEl.className = `text-sm font-medium mt-auto ${forecastPercent >= 100 ? 'text-emerald-600' : 'text-rose-500'}`;
         }
+
 
         let leadsChartInst = null; let revChartInst = null;
 
