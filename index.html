@@ -217,6 +217,7 @@
             document.getElementById('password').value = '';
         }
 
+        // Длинная приписка (для карточек конверсии и выполнения плана)
         function buildComparisonText(myVal, deptVal, isPercentFormat) {
             if (!deptVal || deptVal === 0) return { text: 'Нет данных по отделу', class: 'badge-neutral' };
             const diffPercent = ((myVal - deptVal) / deptVal) * 100;
@@ -227,6 +228,15 @@
                 text: `${direction} ${Math.abs(diffPercent).toFixed(1)}%. Среднее: ${deptStr}`,
                 class: `badge ${color}`
             };
+        }
+
+        // Короткая приписка процентов (для средних чеков)
+        function getShortDiffHtml(myVal, deptVal) {
+            if (!deptVal || deptVal === 0) return '';
+            const diffPercent = ((myVal - deptVal) / deptVal) * 100;
+            const colorClass = diffPercent >= 0 ? 'text-emerald-500' : 'text-rose-500';
+            const sign = diffPercent >= 0 ? '+' : '';
+            return `<span class="${colorClass} font-semibold ml-1">${sign}${diffPercent.toFixed(1)}%</span>`;
         }
 
         async function login() {
@@ -285,17 +295,17 @@
             const checkBadge = document.getElementById('avg-check-vs-dept');
             checkBadge.innerText = checkData.text; checkBadge.className = checkData.class;
 
-            // Вывод средних чеков (Новые/Повторные) и добавление сравнения с отделом
+            // Вывод средних чеков с короткой процентовкой
             const avgNew = p.salesNew > 0 ? p.revNew / p.salesNew : 0;
             const avgRep = p.salesRep > 0 ? p.revRep / p.salesRep : 0;
             const maxAvg = Math.max(avgNew, avgRep) || 1;
             
             document.getElementById('avg-check-new').innerText = formatMoney(avgNew);
-            document.getElementById('dept-avg-check-new').innerText = `(Отдел: ${formatMoney(d.avgCheckNew || 0)})`;
+            document.getElementById('dept-avg-check-new').innerHTML = `(Отдел: ${formatMoney(d.avgCheckNew || 0)}) ${getShortDiffHtml(avgNew, d.avgCheckNew)}`;
             setTimeout(() => { document.getElementById('bar-check-new').style.width = `${(avgNew / maxAvg) * 100}%`; }, 100);
             
             document.getElementById('avg-check-rep').innerText = formatMoney(avgRep);
-            document.getElementById('dept-avg-check-rep').innerText = `(Отдел: ${formatMoney(d.avgCheckRep || 0)})`;
+            document.getElementById('dept-avg-check-rep').innerHTML = `(Отдел: ${formatMoney(d.avgCheckRep || 0)}) ${getShortDiffHtml(avgRep, d.avgCheckRep)}`;
             setTimeout(() => { document.getElementById('bar-check-rep').style.width = `${(avgRep / maxAvg) * 100}%`; }, 100);
 
             calculatePlan();
