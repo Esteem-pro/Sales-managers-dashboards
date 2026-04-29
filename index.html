@@ -31,10 +31,20 @@
         .bento-card:hover { transform: translateY(-2px); }
         .metric-title { color: #64748b; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
         .metric-value { font-size: 1.875rem; font-weight: 800; color: #0f172a; letter-spacing: -0.025em; }
-        .badge { font-size: 0.75rem; font-weight: 600; padding: 0.35rem 0.75rem; border-radius: 8px; display: inline-flex; width: max-content; margin-top: 0.75rem; }
+        
+        .badge { 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            padding: 0.5rem 0.75rem; 
+            border-radius: 8px; 
+            display: block;
+            width: 100%; 
+            line-height: 1.4;
+        }
         .badge-green { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
         .badge-red { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
         .badge-neutral { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+        
         .scroll-area { flex: 1; overflow-y: auto; padding-bottom: 2rem; }
         .scroll-area::-webkit-scrollbar { width: 6px; }
         .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -89,7 +99,9 @@
                 <div class="bento-card">
                     <span class="metric-title">Выполнение плана</span>
                     <div class="metric-value text-blue-600" id="plan-percent">0%</div>
-                    <div class="mt-auto pt-4"><div id="plan-vs-dept" class="badge"></div></div>
+                    <div class="mt-auto pt-4 w-full">
+                        <div id="plan-vs-dept" class="badge"></div>
+                    </div>
                 </div>
 
                 <div class="bento-card">
@@ -115,11 +127,13 @@
                 </div>
 
                 <div class="bento-card md:col-span-2 lg:col-span-2">
-                    <div class="flex justify-between items-start mb-4">
+                    <div class="flex justify-between items-start mb-2">
                         <span class="metric-title">Средний чек</span>
                     </div>
                     <div class="metric-value" id="avg-check">0 ₽</div>
-                    <div id="avg-check-vs-dept" class="badge"></div>
+                    <div class="mt-3 w-full">
+                        <div id="avg-check-vs-dept" class="badge"></div>
+                    </div>
                     
                     <div class="mt-6 space-y-4">
                         <div>
@@ -135,8 +149,10 @@
 
                 <div class="bento-card">
                     <span class="metric-title">Конверсия (Лид → Продажа)</span>
-                    <div class="metric-value mt-auto" id="conversion">0%</div>
-                    <div id="conv-vs-dept" class="badge"></div>
+                    <div class="metric-value" id="conversion">0%</div>
+                    <div class="mt-auto pt-4 w-full">
+                        <div id="conv-vs-dept" class="badge"></div>
+                    </div>
                 </div>
 
                 <div class="bento-card">
@@ -149,7 +165,13 @@
                 </div>
 
                 <div class="bento-card md:col-span-2 lg:col-span-3">
-                    <span class="metric-title">Динамика обработки лидов (Факт по дням)</span>
+                    <div class="flex justify-between items-center w-full mb-1">
+                        <span class="metric-title mb-0">Динамика обработки лидов</span>
+                        <div class="text-right flex items-center gap-2">
+                            <span class="text-xs text-slate-400 font-medium uppercase tracking-wide">Всего за месяц:</span>
+                            <span class="text-xl font-bold text-slate-800" id="total-leads-count">0</span>
+                        </div>
+                    </div>
                     <div class="relative w-full h-64 mt-2"><canvas id="leadsChart"></canvas></div>
                 </div>
 
@@ -163,7 +185,6 @@
     </div>
 
     <script>
-        // Регистрируем плагин для подписей
         Chart.register(ChartDataLabels);
         
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxLQWsq8ujpbSUmtu4ww1KYRLwmZIjazyzR2Nxgcm2isbv0dhXJFcEor-xHpYFKqR8mCA/exec';
@@ -171,7 +192,6 @@
 
         const formatMoney = (num) => new Intl.NumberFormat('ru-RU').format(Math.round(num || 0)) + ' ₽';
 
-        // Проверка локального хранилища при загрузке
         window.onload = () => {
             const sName = localStorage.getItem('sales_dash_user');
             const sPass = localStorage.getItem('sales_dash_pass');
@@ -192,14 +212,14 @@
         }
 
         function buildComparisonText(myVal, deptVal, isPercentFormat) {
-            if (!deptVal || deptVal === 0) return { text: 'Нет данных по отделу', class: 'badge-neutral m-0' };
+            if (!deptVal || deptVal === 0) return { text: 'Нет данных по отделу', class: 'badge-neutral' };
             const diffPercent = ((myVal - deptVal) / deptVal) * 100;
             const direction = diffPercent >= 0 ? 'Ваш показатель лучше на' : 'Ваш показатель хуже на';
             const color = diffPercent >= 0 ? 'badge-green' : 'badge-red';
             const deptStr = isPercentFormat ? deptVal.toFixed(1) + '%' : formatMoney(deptVal);
             return {
-                text: `${direction} ${Math.abs(diffPercent).toFixed(1)}%. Среднее в отделе: ${deptStr}`,
-                class: `badge ${color} m-0`
+                text: `${direction} ${Math.abs(diffPercent).toFixed(1)}%. Среднее: ${deptStr}`,
+                class: `badge ${color}`
             };
         }
 
@@ -219,7 +239,6 @@
                 const result = await response.json();
 
                 if (result.status === 'success') {
-                    // Сохраняем сессию
                     localStorage.setItem('sales_dash_user', name);
                     localStorage.setItem('sales_dash_pass', pass);
                     
@@ -246,7 +265,6 @@
             document.getElementById('deb-received').innerText = formatMoney(p.debRec);
             document.getElementById('deb-new').innerText = formatMoney(p.debNew);
             
-            // Берем точное количество продаж из столбцов таблицы
             document.getElementById('sales-count').innerText = p.salesCount || 0;
             document.getElementById('sales-new-count').innerText = p.salesNew || 0;
             document.getElementById('sales-rep-count').innerText = p.salesRep || 0;
@@ -282,7 +300,7 @@
             const deptRev = globalData.deptAvg.totalRev || 0;
 
             const percent = (totalRev / plan) * 100;
-            document.getElementById('plan-percent').innerText = percent.toFixed(0) + '%'; // Округление до целого
+            document.getElementById('plan-percent').innerText = percent.toFixed(0) + '%';
             
             const deptPercent = (deptRev / plan) * 100; 
             const planData = buildComparisonText(percent, deptPercent, true);
@@ -295,7 +313,7 @@
             const forecastPercent = (forecastedRev / plan) * 100;
             
             const fPercentEl = document.getElementById('forecast-percent');
-            fPercentEl.innerText = forecastPercent.toFixed(0) + '%'; // Округление до целого
+            fPercentEl.innerText = forecastPercent.toFixed(0) + '%'; 
             fPercentEl.className = `metric-value ${forecastPercent >= 100 ? 'text-emerald-500' : 'text-slate-800'}`;
             document.getElementById('forecast-rub').innerText = 'Ожидается: ' + formatMoney(forecastedRev);
         }
@@ -305,7 +323,6 @@
         function initCharts(personal) {
             Chart.defaults.font.family = 'Inter';
             
-            // 1. Круговая диаграмма с подписями
             const ctxRev = document.getElementById('revenuePieChart').getContext('2d');
             if(revChartInst) revChartInst.destroy();
             revChartInst = new Chart(ctxRev, {
@@ -322,7 +339,7 @@
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
                         legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 15 } },
-                        datalabels: { // Настройка подписей на частях круга
+                        datalabels: { 
                             color: '#ffffff', font: { weight: 'bold', size: 12 },
                             formatter: (value) => {
                                 if (value === 0) return '';
@@ -336,14 +353,16 @@
                 }
             });
 
-            // 2. Линейный график (Реальная динамика лидов)
             const ctxLeads = document.getElementById('leadsChart').getContext('2d');
             const currentDay = new Date().getDate();
             const labels = Array.from({length: currentDay}, (_, i) => i + 1);
             
-            // Забираем данные по дням из бэкенда
             const dailyData = personal.leadsDaily || {};
             const realData = labels.map(day => dailyData[day] || 0);
+            
+            // Расчет итогового количества лидов
+            const totalLeads = realData.reduce((sum, val) => sum + val, 0);
+            document.getElementById('total-leads-count').innerText = totalLeads;
 
             if(leadsChartInst) leadsChartInst.destroy();
             leadsChartInst = new Chart(ctxLeads, {
@@ -360,7 +379,17 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, datalabels: { display: false } }, // Отключаем подписи на линейном графике
+                    layout: { padding: { top: 20, right: 10 } }, // Отступ сверху для подписей
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { 
+                            display: true, // Включаем подписи для линейного графика
+                            align: 'top',
+                            color: '#64748b',
+                            font: { size: 11, weight: '600' },
+                            formatter: (value) => value > 0 ? value : '' // Скрываем нулевые значения
+                        } 
+                    }, 
                     scales: {
                         y: { beginAtZero: true, grid: { borderDash: [4, 4], color: '#e2e8f0' }, border: {display: false} },
                         x: { grid: { display: false }, border: {display: false} }
