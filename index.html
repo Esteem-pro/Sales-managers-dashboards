@@ -76,7 +76,7 @@
             </div>
             <div class="flex items-center gap-3 w-full sm:w-auto">
                 <div class="bg-slate-100 p-1 rounded-lg flex text-sm font-semibold">
-                    <button class="px-5 py-2 bg-white text-slate-900 shadow-sm rounded-md">Текущий месяц</button>
+                    <button id="current-month-btn" class="px-5 py-2 bg-white text-slate-900 shadow-sm rounded-md">Загрузка...</button>
                 </div>
                 <button onclick="logout()" class="px-4 py-2 bg-white border border-slate-200 text-rose-600 font-semibold rounded-lg shadow-sm hover:bg-rose-50 text-sm transition">Выйти</button>
             </div>
@@ -198,7 +198,18 @@
 
         const formatMoney = (num) => new Intl.NumberFormat('ru-RU').format(Math.round(num || 0)) + ' ₽';
 
+        // Функция для установки текущего месяца в интерфейсе
+        function updateCurrentMonthUI() {
+            const date = new Date();
+            const monthName = date.toLocaleString('ru-RU', { month: 'long' });
+            // Делаем первую букву заглавной
+            const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+            document.getElementById('current-month-btn').innerText = capitalizedMonth;
+        }
+
         window.onload = () => {
+            updateCurrentMonthUI(); // Обновляем текст при загрузке
+
             const sName = localStorage.getItem('sales_dash_user');
             const sPass = localStorage.getItem('sales_dash_pass');
             if(sName && sPass) {
@@ -217,7 +228,6 @@
             document.getElementById('password').value = '';
         }
 
-        // Длинная приписка (для карточек конверсии и выполнения плана)
         function buildComparisonText(myVal, deptVal, isPercentFormat) {
             if (!deptVal || deptVal === 0) return { text: 'Нет данных по отделу', class: 'badge-neutral' };
             const diffPercent = ((myVal - deptVal) / deptVal) * 100;
@@ -230,7 +240,6 @@
             };
         }
 
-        // Короткая приписка процентов (для средних чеков)
         function getShortDiffHtml(myVal, deptVal) {
             if (!deptVal || deptVal === 0) return '';
             const diffPercent = ((myVal - deptVal) / deptVal) * 100;
@@ -251,7 +260,15 @@
             errorEl.classList.add('hidden'); btnText.classList.add('hidden'); btnLoader.classList.remove('hidden');
 
             try {
-                const response = await fetch(`${SCRIPT_URL}?name=${encodeURIComponent(name)}&pass=${encodeURIComponent(pass)}`);
+                // Определяем текущий месяц и год для передачи в Google Script
+                const date = new Date();
+                const currentMonth = date.getMonth() + 1; // getMonth() отдает 0-11, прибавляем 1
+                const currentYear = date.getFullYear();
+
+                // Добавили параметры &month= и &year= в URL
+                const fetchUrl = `${SCRIPT_URL}?name=${encodeURIComponent(name)}&pass=${encodeURIComponent(pass)}&month=${currentMonth}&year=${currentYear}`;
+                
+                const response = await fetch(fetchUrl);
                 const result = await response.json();
 
                 if (result.status === 'success') {
@@ -295,7 +312,6 @@
             const checkBadge = document.getElementById('avg-check-vs-dept');
             checkBadge.innerText = checkData.text; checkBadge.className = checkData.class;
 
-            // Вывод средних чеков с короткой процентовкой
             const avgNew = p.salesNew > 0 ? p.revNew / p.salesNew : 0;
             const avgRep = p.salesRep > 0 ? p.revRep / p.salesRep : 0;
             const maxAvg = Math.max(avgNew, avgRep) || 1;
