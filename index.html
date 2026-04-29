@@ -182,9 +182,24 @@
                 </div>
 
                 <div class="bento-card md:col-span-2 lg:col-span-1 flex flex-col items-center">
-                    <span class="metric-title w-full text-left">Структура выручки</span>
-                    <div class="relative w-full max-w-[200px] h-48 mt-auto mb-auto"><canvas id="revenuePieChart"></canvas></div>
-                </div>
+    <span class="metric-title w-full text-left">Структура выручки</span>
+    
+    <div class="relative w-full max-w-[180px] h-40 mt-2">
+        <canvas id="revenuePieChart"></canvas>
+    </div>
+
+    <div class="flex gap-6 mt-auto pt-4 w-full justify-center border-t border-slate-50">
+        <div class="text-center">
+            <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Новые</span>
+            <span id="rev-new-percent" class="text-xl font-extrabold text-blue-600">0%</span>
+        </div>
+        <div class="text-center">
+            <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Повт.</span>
+            <span id="rev-rep-percent" class="text-xl font-extrabold text-indigo-500">0%</span>
+        </div>
+    </div>
+</div>
+
 
             </div>
         </main>
@@ -292,6 +307,14 @@
         function renderDashboard(data) {
             const p = data.personal || {}; const d = data.deptAvg || {};
 
+                const totalRev = (p.revNew || 0) + (p.revRep || 0);
+    if (totalRev > 0) {
+        document.getElementById('rev-new-percent').innerText = Math.round((p.revNew / totalRev) * 100) + '%';
+        document.getElementById('rev-rep-percent').innerText = Math.round((p.revRep / totalRev) * 100) + '%';
+    } else {
+        document.getElementById('rev-new-percent').innerText = '0%';
+        document.getElementById('rev-rep-percent').innerText = '0%';
+    }
             document.getElementById('total-revenue').innerText = formatMoney(p.totalRevenue);
             document.getElementById('sales-plan').innerText = formatMoney(p.plan);
             document.getElementById('cash-inflow').innerText = formatMoney(p.cash);
