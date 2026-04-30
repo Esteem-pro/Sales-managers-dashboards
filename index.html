@@ -61,7 +61,7 @@
             <p class="text-slate-500 text-sm mb-6">Дашборд | Аналитика продаж</p>
             <input type="text" id="username" placeholder="Имя менеджера" class="w-full mb-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-blue-500 outline-none">
             <input type="password" id="password" placeholder="Пароль" class="w-full mb-6 p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-blue-500 outline-none">
-            <button onclick="login()" class="w-full bg-slate-900 text-white p-3.5 rounded-xl font-bold flex justify-center items-center h-14">
+            <button onclick="login()" class="w-full bg-slate-900 text-white p-3.5 rounded-xl font-bold flex justify-center items-center h-14 transition hover:bg-slate-800">
                 <span id="login-text">Войти</span>
                 <div id="login-loader" class="loader hidden"></div>
             </button>
@@ -115,9 +115,9 @@
                         <div class="text-2xl font-extrabold text-slate-800" id="deb-received">0 ₽</div>
                     </div>
                     <div class="flex-1 pl-4 flex flex-col justify-between">
-    <span class="metric-title">Новая дебиторка</span>
-    <div class="text-2xl font-extrabold text-yellow-500" id="deb-new">0 ₽</div>
-</div>
+                        <span class="metric-title">Новая дебиторка</span>
+                        <div class="text-2xl font-extrabold text-yellow-500" id="deb-new">0 ₽</div>
+                    </div>
                 </div>
 
                 <div class="bento-card">
@@ -182,25 +182,23 @@
                 </div>
 
                 <div class="bento-card md:col-span-2 lg:col-span-1 flex flex-col items-center">
-    <span class="metric-title w-full text-left">Структура выручки</span>
-    
-    <div class="relative w-full max-w-[180px] h-40 mt-2">
-        <canvas id="revenuePieChart"></canvas>
-    </div>
+                    <span class="metric-title w-full text-left">Структура выручки</span>
+                    
+                    <div class="relative w-full max-w-[180px] h-40 mt-2">
+                        <canvas id="revenuePieChart"></canvas>
+                    </div>
 
-    <div class="flex gap-6 mt-auto pt-4 w-full justify-center border-t border-slate-50">
-        <div class="text-center">
-            <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Новые</span>
-            <span id="rev-new-percent" class="text-xl font-extrabold text-blue-600">0%</span>
-        </div>
-        <div class="text-center">
-            <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Повт.</span>
-            <span id="rev-rep-percent" class="text-xl font-extrabold text-indigo-500">0%</span>
-        </div>
-    </div>
-</div>
-
-
+                    <div class="flex gap-6 mt-auto pt-4 w-full justify-center border-t border-slate-50">
+                        <div class="text-center">
+                            <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Новые</span>
+                            <span id="rev-new-percent" class="text-xl font-extrabold text-blue-600">0%</span>
+                        </div>
+                        <div class="text-center">
+                            <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Повт.</span>
+                            <span id="rev-rep-percent" class="text-xl font-extrabold text-indigo-500">0%</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -208,22 +206,21 @@
     <script>
         Chart.register(ChartDataLabels);
         
+        // ВАЖНО: Вставьте сюда актуальный URL после нового развертывания скрипта
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxLQWsq8ujpbSUmtu4ww1KYRLwmZIjazyzR2Nxgcm2isbv0dhXJFcEor-xHpYFKqR8mCA/exec';
         let globalData = null;
 
         const formatMoney = (num) => new Intl.NumberFormat('ru-RU').format(Math.round(num || 0)) + ' ₽';
 
-        // Функция для установки текущего месяца в интерфейсе
         function updateCurrentMonthUI() {
             const date = new Date();
             const monthName = date.toLocaleString('ru-RU', { month: 'long' });
-            // Делаем первую букву заглавной
             const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
             document.getElementById('current-month-btn').innerText = capitalizedMonth;
         }
 
         window.onload = () => {
-            updateCurrentMonthUI(); // Обновляем текст при загрузке
+            updateCurrentMonthUI();
 
             const sName = localStorage.getItem('sales_dash_user');
             const sPass = localStorage.getItem('sales_dash_pass');
@@ -243,21 +240,21 @@
             document.getElementById('password').value = '';
         }
 
-        function buildComparisonText(myVal, deptVal, isPercentFormat) {
-            if (!deptVal || deptVal === 0) return { text: 'Нет данных по отделу', class: 'badge-neutral' };
-            const diffPercent = ((myVal - deptVal) / deptVal) * 100;
-            const direction = diffPercent >= 0 ? 'Ваш показатель лучше на' : 'Ваш показатель хуже на';
+        function buildComparisonText(myVal, prevVal, isPercentFormat) {
+            if (!prevVal || prevVal === 0) return { text: 'Нет данных за прошлый месяц', class: 'badge-neutral' };
+            const diffPercent = ((myVal - prevVal) / prevVal) * 100;
+            const direction = diffPercent >= 0 ? 'Выше прошлого месяца на' : 'Ниже прошлого месяца на';
             const color = diffPercent >= 0 ? 'badge-green' : 'badge-red';
-            const deptStr = isPercentFormat ? deptVal.toFixed(1) + '%' : formatMoney(deptVal);
+            const prevStr = isPercentFormat ? prevVal.toFixed(1) + '%' : formatMoney(prevVal);
             return {
-                text: `${direction} ${Math.abs(diffPercent).toFixed(1)}%. Среднее: ${deptStr}`,
+                text: `${direction} ${Math.abs(diffPercent).toFixed(1)}%. Было: ${prevStr}`,
                 class: `badge ${color}`
             };
         }
 
-        function getShortDiffHtml(myVal, deptVal) {
-            if (!deptVal || deptVal === 0) return '';
-            const diffPercent = ((myVal - deptVal) / deptVal) * 100;
+        function getShortDiffHtml(myVal, prevVal) {
+            if (!prevVal || prevVal === 0) return '';
+            const diffPercent = ((myVal - prevVal) / prevVal) * 100;
             const colorClass = diffPercent >= 0 ? 'text-emerald-500' : 'text-rose-500';
             const sign = diffPercent >= 0 ? '+' : '';
             return `<span class="${colorClass} font-semibold ml-1">${sign}${diffPercent.toFixed(1)}%</span>`;
@@ -275,15 +272,21 @@
             errorEl.classList.add('hidden'); btnText.classList.add('hidden'); btnLoader.classList.remove('hidden');
 
             try {
-                // Определяем текущий месяц и год для передачи в Google Script
                 const date = new Date();
-                const currentMonth = date.getMonth() + 1; // getMonth() отдает 0-11, прибавляем 1
+                const currentMonth = date.getMonth() + 1; 
                 const currentYear = date.getFullYear();
 
-                // Добавили параметры &month= и &year= в URL
-                const fetchUrl = `${SCRIPT_URL}?name=${encodeURIComponent(name)}&pass=${encodeURIComponent(pass)}&month=${currentMonth}&year=${currentYear}`;
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        name: name,
+                        pass: pass,
+                        month: currentMonth,
+                        year: currentYear
+                    })
+                });
                 
-                const response = await fetch(fetchUrl);
                 const result = await response.json();
 
                 if (result.status === 'success') {
@@ -305,16 +308,18 @@
         }
 
         function renderDashboard(data) {
-            const p = data.personal || {}; const d = data.deptAvg || {};
+            const p = data.personal || {}; 
+            const prev = data.prev || {};
 
-                const totalRev = (p.revNew || 0) + (p.revRep || 0);
-    if (totalRev > 0) {
-        document.getElementById('rev-new-percent').innerText = Math.round((p.revNew / totalRev) * 100) + '%';
-        document.getElementById('rev-rep-percent').innerText = Math.round((p.revRep / totalRev) * 100) + '%';
-    } else {
-        document.getElementById('rev-new-percent').innerText = '0%';
-        document.getElementById('rev-rep-percent').innerText = '0%';
-    }
+            const totalRev = (p.revNew || 0) + (p.revRep || 0);
+            if (totalRev > 0) {
+                document.getElementById('rev-new-percent').innerText = Math.round((p.revNew / totalRev) * 100) + '%';
+                document.getElementById('rev-rep-percent').innerText = Math.round((p.revRep / totalRev) * 100) + '%';
+            } else {
+                document.getElementById('rev-new-percent').innerText = '0%';
+                document.getElementById('rev-rep-percent').innerText = '0%';
+            }
+            
             document.getElementById('total-revenue').innerText = formatMoney(p.totalRevenue);
             document.getElementById('sales-plan').innerText = formatMoney(p.plan);
             document.getElementById('cash-inflow').innerText = formatMoney(p.cash);
@@ -326,12 +331,12 @@
             document.getElementById('sales-rep-count').innerText = p.salesRep || 0;
             
             document.getElementById('conversion').innerText = (p.conversion || 0).toFixed(1) + '%';
-            const convData = buildComparisonText(p.conversion, d.conversion, true);
+            const convData = buildComparisonText(p.conversion, prev.conversion, true);
             const convBadge = document.getElementById('conv-vs-dept');
             convBadge.innerText = convData.text; convBadge.className = convData.class;
 
             document.getElementById('avg-check').innerText = formatMoney(p.avgCheck);
-            const checkData = buildComparisonText(p.avgCheck, d.avgCheck, false);
+            const checkData = buildComparisonText(p.avgCheck, prev.avgCheck, false);
             const checkBadge = document.getElementById('avg-check-vs-dept');
             checkBadge.innerText = checkData.text; checkBadge.className = checkData.class;
 
@@ -340,18 +345,18 @@
             const maxAvg = Math.max(avgNew, avgRep) || 1;
             
             document.getElementById('avg-check-new').innerText = formatMoney(avgNew);
-            document.getElementById('dept-avg-check-new').innerHTML = `(Отдел: ${formatMoney(d.avgCheckNew || 0)}) ${getShortDiffHtml(avgNew, d.avgCheckNew)}`;
+            document.getElementById('dept-avg-check-new').innerHTML = `(Было: ${formatMoney(prev.avgCheckNew || 0)}) ${getShortDiffHtml(avgNew, prev.avgCheckNew)}`;
             setTimeout(() => { document.getElementById('bar-check-new').style.width = `${(avgNew / maxAvg) * 100}%`; }, 100);
             
             document.getElementById('avg-check-rep').innerText = formatMoney(avgRep);
-            document.getElementById('dept-avg-check-rep').innerHTML = `(Отдел: ${formatMoney(d.avgCheckRep || 0)}) ${getShortDiffHtml(avgRep, d.avgCheckRep)}`;
+            document.getElementById('dept-avg-check-rep').innerHTML = `(Было: ${formatMoney(prev.avgCheckRep || 0)}) ${getShortDiffHtml(avgRep, prev.avgCheckRep)}`;
             setTimeout(() => { document.getElementById('bar-check-rep').style.width = `${(avgRep / maxAvg) * 100}%`; }, 100);
 
-            calculatePlan();
+            calculatePlan(prev);
             initCharts(p);
         }
 
-               function calculatePlan() {
+        function calculatePlan(prev) {
             if (!globalData) return;
             const plan = globalData.personal.plan || 1; 
             const totalRev = globalData.personal.totalRevenue || 0;
@@ -359,8 +364,8 @@
             const percent = (totalRev / plan) * 100;
             document.getElementById('plan-percent').innerText = percent.toFixed(0) + '%';
             
-            const deptPercent = globalData.deptAvg.planPercent || 0; 
-            const planData = buildComparisonText(percent, deptPercent, true);
+            const prevPercent = prev.planPercent || 0; 
+            const planData = buildComparisonText(percent, prevPercent, true);
             const planBadge = document.getElementById('plan-vs-dept');
             planBadge.innerText = planData.text; planBadge.className = planData.class;
 
@@ -371,16 +376,12 @@
             
             const fPercentEl = document.getElementById('forecast-percent');
             fPercentEl.innerText = forecastPercent.toFixed(0) + '%'; 
-            
-            // Если прогноз >= 100% — зеленый, если < 100% — красный
             fPercentEl.className = `metric-value ${forecastPercent >= 100 ? 'text-emerald-500' : 'text-rose-500'}`;
             
             const fRubEl = document.getElementById('forecast-rub');
             fRubEl.innerText = 'Ожидается: ' + formatMoney(forecastedRev);
-            // Красим заодно и текст с ожидаемой суммой в рублях для наглядности
             fRubEl.className = `text-sm font-medium mt-auto ${forecastPercent >= 100 ? 'text-emerald-600' : 'text-rose-500'}`;
         }
-
 
         let leadsChartInst = null; let revChartInst = null;
 
