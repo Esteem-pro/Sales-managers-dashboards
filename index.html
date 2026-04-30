@@ -579,14 +579,14 @@
         let globalChartsInitialized = false;
         let gRevChart, gSalesChart, gPlanChart, gConvChart, gCheckChart, gPieChart;
 
-                        function initGlobalCharts() {
+                               function initGlobalCharts() {
             if (!globalData || !globalData.global) return;
             const g = globalData.global;
             const months = g.labels;
 
-            // Новые цвета для максимального контраста
-            const colorNew = '#2563eb'; // Насыщенный синий
-            const colorRep = '#94a3b8'; // Сланцево-серый
+            // Цвета синхронизированы с личной вкладкой
+            const colorNew = '#3b82f6'; // Ярко-синий (Новые)
+            const colorRep = '#818cf8'; // Индиго (Повторные)
 
             Chart.defaults.font.family = 'Inter';
 
@@ -773,7 +773,7 @@
                 }
             });
 
-            // 7. Количество лидов (Фиолетовый график)
+            // 7. Количество лидов
             if (window.gLeadsChart) window.gLeadsChart.destroy();
             window.gLeadsChart = new Chart(document.getElementById('globalLeadsChart'), {
                 type: 'line',
