@@ -573,27 +573,45 @@
         let globalChartsInitialized = false;
         let gRevChart, gSalesChart, gPlanChart, gConvChart, gCheckChart, gPieChart;
 
-        function initGlobalCharts() {
+                function initGlobalCharts() {
             if (!globalData || !globalData.global) return;
             const g = globalData.global;
             const months = g.labels;
 
             Chart.defaults.font.family = 'Inter';
 
-            // График 1: Выручка
+            // 1. Динамика выручки (с итогами над столбцами)
             if (gRevChart) gRevChart.destroy();
             gRevChart = new Chart(document.getElementById('globalRevenueChart'), {
                 type: 'bar',
                 data: {
                     labels: months,
                     datasets: [
-                        { label: 'Новые', data: g.revNew, backgroundColor: '#3b82f6', borderRadius: 4 },
-                        { label: 'Повторные', data: g.revRep, backgroundColor: '#818cf8', borderRadius: 4 }
+                        { 
+                            label: 'Новые', data: g.revNew, backgroundColor: '#3b82f6', borderRadius: 4,
+                            datalabels: { display: false } // Прячем подписи внутри сегмента
+                        },
+                        { 
+                            label: 'Повторные', data: g.revRep, backgroundColor: '#818cf8', borderRadius: 4,
+                            datalabels: {
+                                display: true, align: 'top', anchor: 'end', color: '#475569', font: { weight: 'bold', size: 11 },
+                                formatter: (val, ctx) => {
+                                    // Считаем сумму обоих датасетов для итога
+                                    const newRev = ctx.chart.data.datasets[0].data[ctx.dataIndex];
+                                    const repRev = ctx.chart.data.datasets[1].data[ctx.dataIndex];
+                                    const total = newRev + repRev;
+                                    if(total === 0) return '';
+                                    if(total >= 1000000) return (total/1000000).toFixed(2) + 'M';
+                                    if(total >= 1000) return (total/1000).toFixed(0) + 'k';
+                                    return total;
+                                }
+                            }
+                        }
                     ]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { datalabels: { display: false } },
+                    layout: { padding: { top: 30 } }, // Отступ сверху, чтобы итоги не обрезались
                     scales: {
                         x: { stacked: true, grid: { display: false } },
                         y: { stacked: true, border: {display: false}, grid: { borderDash: [4, 4] } }
@@ -601,20 +619,58 @@
                 }
             });
 
-            // График 2: Продажи
+            // 2. Структура выручки (Добавлены % и перенос строк)
+            if (gPieChart) gPieChart.destroy();
+            gPieChart = new Chart(document.getElementById('globalPieChart'), {
+                type: 'doughnut',
+                data: { labels: ['Новые', 'Повторные'], datasets: [{ data: g.pie, backgroundColor: ['#3b82f6', '#818cf8'], borderWidth: 0 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '65%',
+                    layout: { padding: 20 }, // Отступ чтобы текст влезал
+                    plugins: { 
+                        legend: { position: 'bottom' }, 
+                        datalabels: { 
+                            color: '#fff', font: {weight: 'bold', size: 11}, textAlign: 'center',
+                            formatter: (value, ctx) => {
+                                if (value === 0) return '';
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const percent = Math.round((value / total) * 100) + '%';
+                                
+                                let formattedVal = value;
+                                if (value >= 1000000) formattedVal = (value/1000000).toFixed(1) + 'M';
+                                else if (value >= 1000) formattedVal = (value/1000).toFixed(0) + 'k';
+                                
+                                return `${formattedVal}\n(${percent})`;
+                            } 
+                        } 
+                    }
+                }
+            });
+
+            // 3. Количество продаж (с итогами над столбцами)
             if (gSalesChart) gSalesChart.destroy();
             gSalesChart = new Chart(document.getElementById('globalSalesChart'), {
                 type: 'bar',
                 data: {
                     labels: months,
                     datasets: [
-                        { label: 'Новые продажи', data: g.salesNew, backgroundColor: '#0ea5e9', borderRadius: 4 },
-                        { label: 'Повторные продажи', data: g.salesRep, backgroundColor: '#38bdf8', borderRadius: 4 }
+                        { label: 'Новые продажи', data: g.salesNew, backgroundColor: '#0ea5e9', borderRadius: 4, datalabels: { display: false } },
+                        { label: 'Повторные продажи', data: g.salesRep, backgroundColor: '#38bdf8', borderRadius: 4,
+                          datalabels: {
+                              display: true, align: 'top', anchor: 'end', color: '#475569', font: { weight: 'bold', size: 11 },
+                              formatter: (val, ctx) => {
+                                  const n = ctx.chart.data.datasets[0].data[ctx.dataIndex];
+                                  const r = ctx.chart.data.datasets[1].data[ctx.dataIndex];
+                                  const total = n + r;
+                                  return total > 0 ? total : '';
+                              }
+                          }
+                        }
                     ]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { datalabels: { display: false } },
+                    layout: { padding: { top: 25 } },
                     scales: {
                         x: { stacked: true, grid: { display: false } },
                         y: { stacked: true, border: {display: false} }
@@ -622,65 +678,73 @@
                 }
             });
 
-            // График 3: Выполнение плана
+            // 4. Выполнение плана
             if (gPlanChart) gPlanChart.destroy();
             gPlanChart = new Chart(document.getElementById('globalPlanChart'), {
                 type: 'bar',
                 data: {
                     labels: months,
                     datasets: [{
-                        label: '% выполнения',
-                        data: g.planPercent,
+                        label: '% выполнения', data: g.planPercent,
                         backgroundColor: (ctx) => ctx.raw >= 100 ? '#10b981' : '#f43f5e',
                         borderRadius: 4
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { datalabels: { color: '#fff', font: {weight: 'bold'}, formatter: (v) => v > 0 ? v + '%' : '' } },
+                    layout: { padding: { top: 25 } },
+                    plugins: { datalabels: { color: '#fff', align: 'center', font: {weight: 'bold'}, formatter: (v) => v > 0 ? v + '%' : '' } },
                     scales: { x: { grid: { display: false } }, y: { display: false } }
                 }
             });
 
-            // График 4: Конверсия 
+            // 5. Средняя конверсия (Отображение всех точек)
             if (gConvChart) gConvChart.destroy();
             gConvChart = new Chart(document.getElementById('globalConvChart'), {
                 type: 'line',
                 data: { labels: months, datasets: [{ data: g.conversion, borderColor: '#10b981', tension: 0.4, borderWidth: 3 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: {display: false}, datalabels: { display: false } },
-                    scales: { x: { display: false }, y: { display: false } },
-                    layout: { padding: 10 }
+                    layout: { padding: { top: 25, bottom: 10, left: 15, right: 15 } },
+                    plugins: { 
+                        legend: {display: false}, 
+                        datalabels: { 
+                            display: true, align: 'top', color: '#10b981', font: {weight: 'bold', size: 12},
+                            formatter: (v) => v > 0 ? Math.round(v) + '%' : ''
+                        } 
+                    },
+                    scales: { 
+                        x: { display: false }, 
+                        y: { display: false, min: 0, suggestedMax: Math.max(...g.conversion) * 1.2 } 
+                    }
                 }
             });
 
-            // График 5: Средний чек 
+            // 6. Средний чек (Отображение всех точек с округлением)
             if (gCheckChart) gCheckChart.destroy();
             gCheckChart = new Chart(document.getElementById('globalCheckChart'), {
                 type: 'line',
                 data: { labels: months, datasets: [{ data: g.avgCheck, borderColor: '#3b82f6', fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4, borderWidth: 3 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: {display: false}, datalabels: { display: false } },
-                    scales: { x: { display: false }, y: { display: false } },
-                    layout: { padding: 10 }
-                }
-            });
-
-            // График 6: Общая структура
-            if (gPieChart) gPieChart.destroy();
-            gPieChart = new Chart(document.getElementById('globalPieChart'), {
-                type: 'doughnut',
-                data: { labels: ['Новые', 'Повторные'], datasets: [{ data: g.pie, backgroundColor: ['#3b82f6', '#818cf8'], borderWidth: 0 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '70%',
-                    plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', font: {weight: 'bold'}, formatter: (v) => v > 0 ? v : '' } }
+                    layout: { padding: { top: 25, bottom: 10, left: 20, right: 20 } },
+                    plugins: { 
+                        legend: {display: false}, 
+                        datalabels: { 
+                            display: true, align: 'top', color: '#3b82f6', font: {weight: 'bold', size: 11},
+                            formatter: (v) => v > 0 ? new Intl.NumberFormat('ru-RU').format(Math.round(v)) : ''
+                        } 
+                    },
+                    scales: { 
+                        x: { display: false }, 
+                        y: { display: false, min: 0, suggestedMax: Math.max(...g.avgCheck) * 1.2 } 
+                    }
                 }
             });
 
             globalChartsInitialized = true;
         }
+
     </script>
 </body>
 </html>
