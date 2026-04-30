@@ -253,6 +253,12 @@
                             <canvas id="globalCheckChart"></canvas>
                         </div>
                     </div>
+                    <div class="bento-card lg:col-span-3 border-t-4 border-t-purple-400">
+                        <span class="metric-title">Динамика обработанных лидов</span>
+                        <div class="relative w-full h-40 mt-2">
+                            <canvas id="globalLeadsChart"></canvas>
+                        </div>
+                    </div>
 
                 </div>
             </div>
@@ -715,11 +721,21 @@
                 }
             });
 
-            // 5. Средняя конверсия
+                        // 5. Средняя конверсия
             if (gConvChart) gConvChart.destroy();
             gConvChart = new Chart(document.getElementById('globalConvChart'), {
                 type: 'line',
-                data: { labels: months, datasets: [{ data: g.conversion, borderColor: '#10b981', tension: 0.4, borderWidth: 3 }] },
+                data: { 
+                    labels: months, 
+                    datasets: [{ 
+                        data: g.conversion, 
+                        borderColor: '#10b981', 
+                        fill: true,                                  // <-- Включаем заливку
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',  // <-- Зеленый цвет с прозрачностью 10%
+                        tension: 0.4, 
+                        borderWidth: 3 
+                    }] 
+                },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     layout: { padding: { top: 15, bottom: 10, left: 15, right: 15 } },
@@ -736,6 +752,7 @@
                     }
                 }
             });
+
 
             // 6. Средний чек
             if (gCheckChart) gCheckChart.destroy();
@@ -758,7 +775,37 @@
                     }
                 }
             });
-
+            // 7. Количество лидов (Фиолетовый график)
+            if (window.gLeadsChart) window.gLeadsChart.destroy();
+            window.gLeadsChart = new Chart(document.getElementById('globalLeadsChart'), {
+                type: 'line',
+                data: { 
+                    labels: months, 
+                    datasets: [{ 
+                        data: g.leads, 
+                        borderColor: '#a855f7', 
+                        fill: true, 
+                        backgroundColor: 'rgba(168, 85, 247, 0.1)', 
+                        tension: 0.4, 
+                        borderWidth: 3 
+                    }] 
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 15, bottom: 10, left: 15, right: 15 } },
+                    plugins: { 
+                        legend: {display: false}, 
+                        datalabels: { 
+                            display: true, align: 'top', color: '#a855f7', font: {weight: 'bold', size: 12},
+                            formatter: (v) => v > 0 ? v : ''
+                        } 
+                    },
+                    scales: { 
+                        x: { display: false }, 
+                        y: { display: false, min: 0, grace: '25%' } 
+                    }
+                }
+            });
             globalChartsInitialized = true;
         }
 
