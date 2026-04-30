@@ -580,7 +580,7 @@
 
             Chart.defaults.font.family = 'Inter';
 
-            // 1. Динамика выручки (с итогами над столбцами и отступом легенды)
+            // 1. Динамика выручки
             if (gRevChart) gRevChart.destroy();
             gRevChart = new Chart(document.getElementById('globalRevenueChart'), {
                 type: 'bar',
@@ -610,16 +610,17 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 10 } },
                     plugins: {
-                        // НАСТРОЙКА ЛЕГЕНДЫ
-                        legend: { 
-                            labels: { padding: 30, usePointStyle: true, boxWidth: 8 } 
-                        }
+                        legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 15 } }
                     },
                     scales: {
                         x: { stacked: true, grid: { display: false } },
-                        y: { stacked: true, border: {display: false}, grid: { borderDash: [4, 4] } }
+                        y: { 
+                            stacked: true, 
+                            border: {display: false}, 
+                            grid: { borderDash: [4, 4] },
+                            grace: '20%' // <-- Оставляет 20% пустого места сверху
+                        }
                     }
                 }
             });
@@ -631,12 +632,9 @@
                 data: { labels: ['Новые', 'Повторные'], datasets: [{ data: g.pie, backgroundColor: ['#3b82f6', '#818cf8'], borderWidth: 0 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false, cutout: '65%',
-                    layout: { padding: 20 },
+                    layout: { padding: 15 },
                     plugins: { 
-                        legend: { 
-                            position: 'bottom', 
-                            labels: { padding: 20, usePointStyle: true, boxWidth: 8 } 
-                        }, 
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 15 } }, 
                         datalabels: { 
                             color: '#fff', font: {weight: 'bold', size: 11}, textAlign: 'center',
                             formatter: (value, ctx) => {
@@ -655,7 +653,7 @@
                 }
             });
 
-            // 3. Количество продаж (с отступом легенды)
+            // 3. Количество продаж
             if (gSalesChart) gSalesChart.destroy();
             gSalesChart = new Chart(document.getElementById('globalSalesChart'), {
                 type: 'bar',
@@ -678,21 +676,21 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 10 } },
                     plugins: {
-                        // НАСТРОЙКА ЛЕГЕНДЫ
-                        legend: { 
-                            labels: { padding: 30, usePointStyle: true, boxWidth: 8 } 
-                        }
+                        legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 15 } }
                     },
                     scales: {
                         x: { stacked: true, grid: { display: false } },
-                        y: { stacked: true, border: {display: false} }
+                        y: { 
+                            stacked: true, 
+                            border: {display: false},
+                            grace: '20%' // <-- Оставляет 20% пустого места сверху
+                        }
                     }
                 }
             });
 
-            // 4. Выполнение плана (с отступом легенды)
+            // 4. Выполнение плана
             if (gPlanChart) gPlanChart.destroy();
             gPlanChart = new Chart(document.getElementById('globalPlanChart'), {
                 type: 'bar',
@@ -706,15 +704,14 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 10 } },
                     plugins: { 
-                        // НАСТРОЙКА ЛЕГЕНДЫ
-                        legend: { 
-                            labels: { padding: 30, usePointStyle: true, boxWidth: 8 } 
-                        },
+                        legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 15 } },
                         datalabels: { color: '#fff', align: 'center', font: {weight: 'bold'}, formatter: (v) => v > 0 ? v + '%' : '' } 
                     },
-                    scales: { x: { grid: { display: false } }, y: { display: false } }
+                    scales: { 
+                        x: { grid: { display: false } }, 
+                        y: { display: false, grace: '20%' } // <-- Защита от наложения
+                    }
                 }
             });
 
@@ -725,7 +722,7 @@
                 data: { labels: months, datasets: [{ data: g.conversion, borderColor: '#10b981', tension: 0.4, borderWidth: 3 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 25, bottom: 10, left: 15, right: 15 } },
+                    layout: { padding: { top: 15, bottom: 10, left: 15, right: 15 } },
                     plugins: { 
                         legend: {display: false}, 
                         datalabels: { 
@@ -735,7 +732,7 @@
                     },
                     scales: { 
                         x: { display: false }, 
-                        y: { display: false, min: 0, suggestedMax: Math.max(...g.conversion) * 1.2 } 
+                        y: { display: false, min: 0, grace: '25%' } 
                     }
                 }
             });
@@ -747,7 +744,7 @@
                 data: { labels: months, datasets: [{ data: g.avgCheck, borderColor: '#3b82f6', fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4, borderWidth: 3 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 25, bottom: 10, left: 20, right: 20 } },
+                    layout: { padding: { top: 15, bottom: 10, left: 20, right: 20 } },
                     plugins: { 
                         legend: {display: false}, 
                         datalabels: { 
@@ -757,7 +754,7 @@
                     },
                     scales: { 
                         x: { display: false }, 
-                        y: { display: false, min: 0, suggestedMax: Math.max(...g.avgCheck) * 1.2 } 
+                        y: { display: false, min: 0, grace: '25%' } 
                     }
                 }
             });
