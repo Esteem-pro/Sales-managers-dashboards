@@ -545,22 +545,50 @@
             }
         }
 
+               // --- Логика переключения вкладок ---
+        function switchTab(tabName) {
+            const dashScreen = document.getElementById('personal-stats-view');
+            const globalScreen = document.getElementById('global-stats-screen');
+            const btnPersonal = document.getElementById('tab-personal');
+            const btnGlobal = document.getElementById('tab-global');
+
+            if (tabName === 'personal') {
+                dashScreen.classList.remove('hidden');
+                globalScreen.classList.add('hidden');
+                
+                btnPersonal.className = "px-5 py-2 bg-white text-slate-900 shadow-sm rounded-lg w-1/2 sm:w-auto transition-all";
+                btnGlobal.className = "px-5 py-2 text-slate-500 hover:text-slate-900 rounded-lg w-1/2 sm:w-auto transition-all";
+            } else {
+                dashScreen.classList.add('hidden');
+                globalScreen.classList.remove('hidden');
+                
+                btnGlobal.className = "px-5 py-2 bg-white text-slate-900 shadow-sm rounded-lg w-1/2 sm:w-auto transition-all";
+                btnPersonal.className = "px-5 py-2 text-slate-500 hover:text-slate-900 rounded-lg w-1/2 sm:w-auto transition-all";
+                
+                if (!globalChartsInitialized) initGlobalCharts();
+            }
+        }
+
         // --- Логика графиков Общей статистики ---
         let globalChartsInitialized = false;
+        let gRevChart, gSalesChart, gPlanChart, gConvChart, gCheckChart, gPieChart;
 
         function initGlobalCharts() {
-            // ВАЖНО: Здесь пока тестовые данные (mock data). 
-            // В будущем вы подставите сюда массивы, полученные с вашего Google Apps Script.
-            const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'];
-            
-            // График 1: Выручка (Stacked Bar)
-            new Chart(document.getElementById('globalRevenueChart'), {
+            if (!globalData || !globalData.global) return;
+            const g = globalData.global;
+            const months = g.labels;
+
+            Chart.defaults.font.family = 'Inter';
+
+            // График 1: Выручка
+            if (gRevChart) gRevChart.destroy();
+            gRevChart = new Chart(document.getElementById('globalRevenueChart'), {
                 type: 'bar',
                 data: {
                     labels: months,
                     datasets: [
-                        { label: 'Новые', data: [1200000, 1500000, 1400000, 1800000, 2100000, 2500000], backgroundColor: '#3b82f6', borderRadius: 4 },
-                        { label: 'Повторные', data: [400000, 500000, 600000, 550000, 800000, 950000], backgroundColor: '#818cf8', borderRadius: 4 }
+                        { label: 'Новые', data: g.revNew, backgroundColor: '#3b82f6', borderRadius: 4 },
+                        { label: 'Повторные', data: g.revRep, backgroundColor: '#818cf8', borderRadius: 4 }
                     ]
                 },
                 options: {
@@ -573,14 +601,15 @@
                 }
             });
 
-            // График 2: Продажи (Stacked Bar)
-            new Chart(document.getElementById('globalSalesChart'), {
+            // График 2: Продажи
+            if (gSalesChart) gSalesChart.destroy();
+            gSalesChart = new Chart(document.getElementById('globalSalesChart'), {
                 type: 'bar',
                 data: {
                     labels: months,
                     datasets: [
-                        { label: 'Новые продажи', data: [45, 52, 48, 60, 72, 85], backgroundColor: '#0ea5e9', borderRadius: 4 },
-                        { label: 'Повторные продажи', data: [15, 18, 22, 20, 28, 35], backgroundColor: '#38bdf8', borderRadius: 4 }
+                        { label: 'Новые продажи', data: g.salesNew, backgroundColor: '#0ea5e9', borderRadius: 4 },
+                        { label: 'Повторные продажи', data: g.salesRep, backgroundColor: '#38bdf8', borderRadius: 4 }
                     ]
                 },
                 options: {
@@ -593,29 +622,31 @@
                 }
             });
 
-            // График 3: Выполнение плана (%)
-            new Chart(document.getElementById('globalPlanChart'), {
+            // График 3: Выполнение плана
+            if (gPlanChart) gPlanChart.destroy();
+            gPlanChart = new Chart(document.getElementById('globalPlanChart'), {
                 type: 'bar',
                 data: {
                     labels: months,
                     datasets: [{
                         label: '% выполнения',
-                        data: [85, 95, 102, 98, 115, 120],
+                        data: g.planPercent,
                         backgroundColor: (ctx) => ctx.raw >= 100 ? '#10b981' : '#f43f5e',
                         borderRadius: 4
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { datalabels: { color: '#fff', font: {weight: 'bold'}, formatter: (v) => v + '%' } },
+                    plugins: { datalabels: { color: '#fff', font: {weight: 'bold'}, formatter: (v) => v > 0 ? v + '%' : '' } },
                     scales: { x: { grid: { display: false } }, y: { display: false } }
                 }
             });
 
-            // График 4: Конверсия (Спарклайн)
-            new Chart(document.getElementById('globalConvChart'), {
+            // График 4: Конверсия 
+            if (gConvChart) gConvChart.destroy();
+            gConvChart = new Chart(document.getElementById('globalConvChart'), {
                 type: 'line',
-                data: { labels: months, datasets: [{ data: [12, 14, 13, 16, 18, 17], borderColor: '#10b981', tension: 0.4, borderWidth: 3 }] },
+                data: { labels: months, datasets: [{ data: g.conversion, borderColor: '#10b981', tension: 0.4, borderWidth: 3 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: {display: false}, datalabels: { display: false } },
@@ -624,10 +655,11 @@
                 }
             });
 
-            // График 5: Средний чек (Спарклайн)
-            new Chart(document.getElementById('globalCheckChart'), {
+            // График 5: Средний чек 
+            if (gCheckChart) gCheckChart.destroy();
+            gCheckChart = new Chart(document.getElementById('globalCheckChart'), {
                 type: 'line',
-                data: { labels: months, datasets: [{ data: [26000, 28000, 27500, 29000, 31000, 30500], borderColor: '#3b82f6', fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4, borderWidth: 3 }] },
+                data: { labels: months, datasets: [{ data: g.avgCheck, borderColor: '#3b82f6', fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4, borderWidth: 3 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: {display: false}, datalabels: { display: false } },
@@ -637,12 +669,13 @@
             });
 
             // График 6: Общая структура
-            new Chart(document.getElementById('globalPieChart'), {
+            if (gPieChart) gPieChart.destroy();
+            gPieChart = new Chart(document.getElementById('globalPieChart'), {
                 type: 'doughnut',
-                data: { labels: ['Новые', 'Повторные'], datasets: [{ data: [65, 35], backgroundColor: ['#3b82f6', '#818cf8'], borderWidth: 0 }] },
+                data: { labels: ['Новые', 'Повторные'], datasets: [{ data: g.pie, backgroundColor: ['#3b82f6', '#818cf8'], borderWidth: 0 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false, cutout: '70%',
-                    plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', font: {weight: 'bold'} } }
+                    plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', font: {weight: 'bold'}, formatter: (v) => v > 0 ? v : '' } }
                 }
             });
 
