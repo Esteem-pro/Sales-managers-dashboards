@@ -579,26 +579,30 @@
         let globalChartsInitialized = false;
         let gRevChart, gSalesChart, gPlanChart, gConvChart, gCheckChart, gPieChart;
 
-                function initGlobalCharts() {
+                        function initGlobalCharts() {
             if (!globalData || !globalData.global) return;
             const g = globalData.global;
             const months = g.labels;
 
+            // Новые цвета для максимального контраста
+            const colorNew = '#2563eb'; // Насыщенный синий
+            const colorRep = '#94a3b8'; // Сланцево-серый
+
             Chart.defaults.font.family = 'Inter';
 
             // 1. Динамика выручки
-            if (gRevChart) gRevChart.destroy();
-            gRevChart = new Chart(document.getElementById('globalRevenueChart'), {
+            if (window.gRevChart) window.gRevChart.destroy();
+            window.gRevChart = new Chart(document.getElementById('globalRevenueChart'), {
                 type: 'bar',
                 data: {
                     labels: months,
                     datasets: [
                         { 
-                            label: 'Новые', data: g.revNew, backgroundColor: '#3b82f6', borderRadius: 4,
+                            label: 'Новые', data: g.revNew, backgroundColor: colorNew, borderRadius: 4,
                             datalabels: { display: false }
                         },
                         { 
-                            label: 'Повторные', data: g.revRep, backgroundColor: '#818cf8', borderRadius: 4,
+                            label: 'Повторные', data: g.revRep, backgroundColor: colorRep, borderRadius: 4,
                             datalabels: {
                                 display: true, align: 'top', anchor: 'end', color: '#475569', font: { weight: 'bold', size: 11 },
                                 formatter: (val, ctx) => {
@@ -617,25 +621,20 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: {
-                        legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 15 } }
+                        legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 25 } }
                     },
                     scales: {
                         x: { stacked: true, grid: { display: false } },
-                        y: { 
-                            stacked: true, 
-                            border: {display: false}, 
-                            grid: { borderDash: [4, 4] },
-                            grace: '20%' // <-- Оставляет 20% пустого места сверху
-                        }
+                        y: { stacked: true, border: {display: false}, grid: { borderDash: [4, 4] }, grace: '20%' }
                     }
                 }
             });
 
-            // 2. Структура выручки
-            if (gPieChart) gPieChart.destroy();
-            gPieChart = new Chart(document.getElementById('globalPieChart'), {
+            // 2. Общая структура выручки
+            if (window.gPieChart) window.gPieChart.destroy();
+            window.gPieChart = new Chart(document.getElementById('globalPieChart'), {
                 type: 'doughnut',
-                data: { labels: ['Новые', 'Повторные'], datasets: [{ data: g.pie, backgroundColor: ['#3b82f6', '#818cf8'], borderWidth: 0 }] },
+                data: { labels: ['Новые', 'Повторные'], datasets: [{ data: g.pie, backgroundColor: [colorNew, colorRep], borderWidth: 0 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false, cutout: '65%',
                     layout: { padding: 15 },
@@ -647,11 +646,7 @@
                                 if (value === 0) return '';
                                 const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
                                 const percent = Math.round((value / total) * 100) + '%';
-                                
-                                let formattedVal = value;
-                                if (value >= 1000000) formattedVal = (value/1000000).toFixed(1) + 'M';
-                                else if (value >= 1000) formattedVal = (value/1000).toFixed(0) + 'k';
-                                
+                                let formattedVal = value >= 1000000 ? (value/1000000).toFixed(1) + 'M' : (value >= 1000 ? (value/1000).toFixed(0) + 'k' : value);
                                 return `${formattedVal}\n(${percent})`;
                             } 
                         } 
@@ -660,14 +655,14 @@
             });
 
             // 3. Количество продаж
-            if (gSalesChart) gSalesChart.destroy();
-            gSalesChart = new Chart(document.getElementById('globalSalesChart'), {
+            if (window.gSalesChart) window.gSalesChart.destroy();
+            window.gSalesChart = new Chart(document.getElementById('globalSalesChart'), {
                 type: 'bar',
                 data: {
                     labels: months,
                     datasets: [
-                        { label: 'Новые продажи', data: g.salesNew, backgroundColor: '#0ea5e9', borderRadius: 4, datalabels: { display: false } },
-                        { label: 'Повторные продажи', data: g.salesRep, backgroundColor: '#38bdf8', borderRadius: 4,
+                        { label: 'Новые продажи', data: g.salesNew, backgroundColor: colorNew, borderRadius: 4, datalabels: { display: false } },
+                        { label: 'Повторные продажи', data: g.salesRep, backgroundColor: colorRep, borderRadius: 4,
                           datalabels: {
                               display: true, align: 'top', anchor: 'end', color: '#475569', font: { weight: 'bold', size: 11 },
                               formatter: (val, ctx) => {
@@ -683,22 +678,18 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: {
-                        legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 15 } }
+                        legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 25 } }
                     },
                     scales: {
                         x: { stacked: true, grid: { display: false } },
-                        y: { 
-                            stacked: true, 
-                            border: {display: false},
-                            grace: '20%' // <-- Оставляет 20% пустого места сверху
-                        }
+                        y: { stacked: true, border: {display: false}, grace: '20%' }
                     }
                 }
             });
 
             // 4. Выполнение плана
-            if (gPlanChart) gPlanChart.destroy();
-            gPlanChart = new Chart(document.getElementById('globalPlanChart'), {
+            if (window.gPlanChart) window.gPlanChart.destroy();
+            window.gPlanChart = new Chart(document.getElementById('globalPlanChart'), {
                 type: 'bar',
                 data: {
                     labels: months,
@@ -711,27 +702,24 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
-                        legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 15 } },
+                        legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 25 } },
                         datalabels: { color: '#fff', align: 'center', font: {weight: 'bold'}, formatter: (v) => v > 0 ? v + '%' : '' } 
                     },
-                    scales: { 
-                        x: { grid: { display: false } }, 
-                        y: { display: false, grace: '20%' } // <-- Защита от наложения
-                    }
+                    scales: { x: { grid: { display: false } }, y: { display: false, grace: '20%' } }
                 }
             });
 
-                        // 5. Средняя конверсия
-            if (gConvChart) gConvChart.destroy();
-            gConvChart = new Chart(document.getElementById('globalConvChart'), {
+            // 5. Средняя конверсия
+            if (window.gConvChart) window.gConvChart.destroy();
+            window.gConvChart = new Chart(document.getElementById('globalConvChart'), {
                 type: 'line',
                 data: { 
                     labels: months, 
                     datasets: [{ 
                         data: g.conversion, 
                         borderColor: '#10b981', 
-                        fill: true,                                  // <-- Включаем заливку
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',  // <-- Зеленый цвет с прозрачностью 10%
+                        fill: true, 
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)', 
                         tension: 0.4, 
                         borderWidth: 3 
                     }] 
@@ -753,12 +741,21 @@
                 }
             });
 
-
             // 6. Средний чек
-            if (gCheckChart) gCheckChart.destroy();
-            gCheckChart = new Chart(document.getElementById('globalCheckChart'), {
+            if (window.gCheckChart) window.gCheckChart.destroy();
+            window.gCheckChart = new Chart(document.getElementById('globalCheckChart'), {
                 type: 'line',
-                data: { labels: months, datasets: [{ data: g.avgCheck, borderColor: '#3b82f6', fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4, borderWidth: 3 }] },
+                data: { 
+                    labels: months, 
+                    datasets: [{ 
+                        data: g.avgCheck, 
+                        borderColor: '#3b82f6', 
+                        fill: true, 
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)', 
+                        tension: 0.4, 
+                        borderWidth: 3 
+                    }] 
+                },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     layout: { padding: { top: 15, bottom: 10, left: 20, right: 20 } },
@@ -775,6 +772,7 @@
                     }
                 }
             });
+
             // 7. Количество лидов (Фиолетовый график)
             if (window.gLeadsChart) window.gLeadsChart.destroy();
             window.gLeadsChart = new Chart(document.getElementById('globalLeadsChart'), {
@@ -806,6 +804,7 @@
                     }
                 }
             });
+
             globalChartsInitialized = true;
         }
 
