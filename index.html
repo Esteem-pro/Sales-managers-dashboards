@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Дашборд | Аналитика продаж</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -186,11 +183,9 @@
 
                 <div class="bento-card md:col-span-2 lg:col-span-1 flex flex-col items-center">
                     <span class="metric-title w-full text-left">Структура выручки</span>
-                    
                     <div class="relative w-full max-w-[180px] h-40 mt-2">
                         <canvas id="revenuePieChart"></canvas>
                     </div>
-
                     <div class="flex gap-6 mt-auto pt-4 w-full justify-center border-t border-slate-50">
                         <div class="text-center">
                             <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Новые</span>
@@ -266,59 +261,81 @@
         </div>
 
         <div id="income-screen" class="hidden scroll-area w-full">
-    <div class="max-w-7xl mx-auto p-4 sm:p-6 grid grid-cols-1 gap-5">
-        
-        <div class="bento-card">
-            <div class="flex justify-between items-center mb-4">
-                <span class="metric-title mb-0">История доходов (по месяцам)</span>
-            </div>
-            <div class="relative w-full h-60">
-                <canvas id="incomeChart"></canvas>
-            </div>
-        </div>
-
-        <div class="bento-card overflow-hidden p-0">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white flex-col sm:flex-row gap-4">
-                <span class="metric-title mb-0">Детализация заказов</span>
+            <div class="max-w-7xl mx-auto p-4 sm:p-6 grid grid-cols-1 gap-5">
                 
-                <select id="month-filter" onchange="filterOrdersTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none font-medium min-w-[180px]">
-                    <option value="all">За все время</option>
-                </select>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm whitespace-nowrap">
-                    <thead class="bg-slate-50 text-slate-500 font-medium">
-                        <tr>
-                            <th class="px-5 py-4">Дата</th>
-                            <th class="px-5 py-4">ID заказа</th>
-                            <th class="px-5 py-4">Выручка (План)</th>
-                            <th class="px-5 py-4">Задолженность</th>
-                            <th class="px-5 py-4">Изготовлен</th>
-                            <th class="px-5 py-4">База</th>
-                            <th class="px-5 py-4">Коэф.</th>
-                            <th class="px-5 py-4">Оверпрайс</th>
-                            <th class="px-5 py-4 text-emerald-600 font-bold">Итоговый доход</th>
-                            <th class="px-5 py-4">Статус</th>
-                        </tr>
-                    </thead>
-                    <tbody id="orders-table-body" class="divide-y divide-slate-100 text-slate-700">
-                    </tbody>
-                </table>
+                <div class="bento-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="metric-title mb-0">История доходов (по месяцам)</span>
+                    </div>
+                    <div class="relative w-full h-60">
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bento-card overflow-hidden p-0">
+                    <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white flex-col sm:flex-row gap-4">
+                        <span class="metric-title mb-0">Детализация заказов</span>
+                        <select id="month-filter" onchange="filterOrdersTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none font-medium min-w-[180px]">
+                            <option value="all">За все время</option>
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-slate-50 text-slate-500 font-medium">
+                                <tr>
+                                    <th class="px-5 py-4">Дата</th>
+                                    <th class="px-5 py-4">ID заказа</th>
+                                    <th class="px-5 py-4">Выручка (План)</th>
+                                    <th class="px-5 py-4">Задолженность</th>
+                                    <th class="px-5 py-4">Изготовлен</th>
+                                    <th class="px-5 py-4">База</th>
+                                    <th class="px-5 py-4">Коэф.</th>
+                                    <th class="px-5 py-4">Оверпрайс</th>
+                                    <th class="px-5 py-4 text-emerald-600 font-bold">Итоговый доход</th>
+                                    <th class="px-5 py-4">Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body" class="divide-y divide-slate-100 text-slate-700">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
 
     </div> 
 
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
     <script>
-        Chart.register(ChartDataLabels);
-        
-        // ВАЖНО: Твоя ссылка (БЕЗ ИЗМЕНЕНИЙ)
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzK-6RUJcQYZykSwtZWq5CawXYcrL5MGWGddzvq3HOKsFXY3Vxl5C39htR0qVhRBCzC/exec';
         let globalData = null;
 
         const formatMoney = (num) => new Intl.NumberFormat('ru-RU').format(Math.round(num || 0)) + ' ₽';
+
+        // --- УТИЛИТА LAZY LOAD ДЛЯ ГРАФИКОВ ---
+        function lazyLoadChart(canvasId, renderCallback) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Если скрипты еще не загрузились, ждем
+                        if (typeof Chart === 'undefined') {
+                            setTimeout(() => renderCallback(), 500);
+                        } else {
+                            renderCallback();
+                        }
+                        obs.unobserve(canvas); // Больше не следим, график отрисован
+                    }
+                });
+            }, { threshold: 0.05 }); // Срабатывает, когда 5% графика появляется на экране
+
+            observer.observe(canvas);
+        }
 
         function updateCurrentMonthUI() {
             const date = new Date();
@@ -329,7 +346,6 @@
 
         window.onload = () => {
             updateCurrentMonthUI();
-
             const sName = localStorage.getItem('sales_dash_user');
             const sPass = localStorage.getItem('sales_dash_pass');
             if(sName && sPass) {
@@ -368,7 +384,6 @@
             return `<span class="${colorClass} font-semibold ml-1">${sign}${diffPercent.toFixed(1)}%</span>`;
         }
 
-        // Логика входа (БЕЗ ИЗМЕНЕНИЙ - используем твой старый fetch)
         async function login() {
             const name = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value.trim();
@@ -388,12 +403,7 @@
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        name: name,
-                        pass: pass,
-                        month: currentMonth,
-                        year: currentYear
-                    })
+                    body: JSON.stringify({ name: name, pass: pass, month: currentMonth, year: currentYear })
                 });
                 
                 const result = await response.json();
@@ -407,6 +417,11 @@
                     document.getElementById('user-greeting').innerText = name;
                     
                     globalData = result.data;
+                    
+                    if (typeof Chart !== 'undefined' && Chart.register) {
+                        Chart.register(ChartDataLabels);
+                    }
+                    
                     renderDashboard(globalData);
                 } else { throw new Error(result.message || 'Ошибка авторизации'); }
             } catch (error) {
@@ -462,10 +477,9 @@
             setTimeout(() => { document.getElementById('bar-check-rep').style.width = `${(avgRep / maxAvg) * 100}%`; }, 100);
 
             calculatePlan(prev);
-            initCharts(p);
             
-            // Запуск рендера новой вкладки "Мой доход"
-            renderIncomeTab(data.income);
+            // Инициализируем только графики первой вкладки с Lazy Load
+            initPersonalCharts(p);
         }
 
         function calculatePlan(prev) {
@@ -497,85 +511,77 @@
 
         let leadsChartInst = null; let revChartInst = null;
 
-        function initCharts(personal) {
+        function initPersonalCharts(personal) {
             Chart.defaults.font.family = 'Inter';
             
-            const ctxRev = document.getElementById('revenuePieChart').getContext('2d');
-            if(revChartInst) revChartInst.destroy();
-            revChartInst = new Chart(ctxRev, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Новые', 'Повторные'],
-                    datasets: [{
-                        data: [personal.revNew || 0, personal.revRep || 0],
-                        backgroundColor: ['#3b82f6', '#818cf8'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 15 } },
-                        datalabels: { 
-                            color: '#ffffff', font: { weight: 'bold', size: 12 },
-                            formatter: (value) => {
-                                if (value === 0) return '';
-                                if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
-                                if (value >= 1000) return (value/1000).toFixed(0) + 'k';
-                                return value;
-                            }
-                        }
+            lazyLoadChart('revenuePieChart', () => {
+                const ctxRev = document.getElementById('revenuePieChart').getContext('2d');
+                if(revChartInst) revChartInst.destroy();
+                revChartInst = new Chart(ctxRev, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Новые', 'Повторные'],
+                        datasets: [{
+                            data: [personal.revNew || 0, personal.revRep || 0],
+                            backgroundColor: ['#3b82f6', '#818cf8'], borderWidth: 0
+                        }]
                     },
-                    cutout: '65%'
-                }
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 15 } },
+                            datalabels: { 
+                                color: '#ffffff', font: { weight: 'bold', size: 12 },
+                                formatter: (value) => {
+                                    if (value === 0) return '';
+                                    if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
+                                    if (value >= 1000) return (value/1000).toFixed(0) + 'k';
+                                    return value;
+                                }
+                            }
+                        }, cutout: '65%'
+                    }
+                });
             });
 
-            const ctxLeads = document.getElementById('leadsChart').getContext('2d');
-            const currentDay = new Date().getDate();
-            const labels = Array.from({length: currentDay}, (_, i) => i + 1);
-            
-            const dailyData = personal.leadsDaily || {};
-            const realData = labels.map(day => dailyData[day] || 0);
-            
-            const totalLeads = realData.reduce((sum, val) => sum + val, 0);
-            document.getElementById('total-leads-count').innerText = totalLeads;
+            lazyLoadChart('leadsChart', () => {
+                const ctxLeads = document.getElementById('leadsChart').getContext('2d');
+                const currentDay = new Date().getDate();
+                const labels = Array.from({length: currentDay}, (_, i) => i + 1);
+                
+                const dailyData = personal.leadsDaily || {};
+                const realData = labels.map(day => dailyData[day] || 0);
+                
+                const totalLeads = realData.reduce((sum, val) => sum + val, 0);
+                document.getElementById('total-leads-count').innerText = totalLeads;
 
-            if(leadsChartInst) leadsChartInst.destroy();
-            leadsChartInst = new Chart(ctxLeads, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Лиды', data: realData,
-                        borderColor: '#0f172a', backgroundColor: 'rgba(15, 23, 42, 0.05)',
-                        borderWidth: 2, tension: 0.3, fill: true,
-                        pointBackgroundColor: '#ffffff', pointBorderColor: '#0f172a',
-                        pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 20, right: 10 } }, 
-                    plugins: { 
-                        legend: { display: false }, 
-                        datalabels: { 
-                            display: true, 
-                            align: 'top',
-                            color: '#64748b',
-                            font: { size: 11, weight: '600' },
-                            formatter: (value) => value > 0 ? value : '' 
-                        } 
-                    }, 
-                    scales: {
-                        y: { beginAtZero: true, grid: { borderDash: [4, 4], color: '#e2e8f0' }, border: {display: false} },
-                        x: { grid: { display: false }, border: {display: false} }
+                if(leadsChartInst) leadsChartInst.destroy();
+                leadsChartInst = new Chart(ctxLeads, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Лиды', data: realData,
+                            borderColor: '#0f172a', backgroundColor: 'rgba(15, 23, 42, 0.05)',
+                            borderWidth: 2, tension: 0.3, fill: true,
+                            pointBackgroundColor: '#ffffff', pointBorderColor: '#0f172a',
+                            pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 6
+                        }]
                     },
-                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
-                }
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        layout: { padding: { top: 20, right: 10 } }, 
+                        plugins: { legend: { display: false }, datalabels: { display: true, align: 'top', color: '#64748b', font: { size: 11, weight: '600' }, formatter: (v) => v > 0 ? v : '' } }, 
+                        scales: { y: { beginAtZero: true, grid: { borderDash: [4, 4], color: '#e2e8f0' }, border: {display: false} }, x: { grid: { display: false }, border: {display: false} } },
+                        interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                    }
+                });
             });
         }
 
-        // --- ИЗМЕНЕННАЯ ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ДЛЯ 3-Х ВКЛАДОК ---
+        let globalChartsInitialized = false;
+        let incomeTabInitialized = false;
+
         function switchTab(tabName) {
             const dashScreen = document.getElementById('personal-stats-view');
             const globalScreen = document.getElementById('global-stats-screen');
@@ -585,11 +591,9 @@
             const btnGlobal = document.getElementById('tab-global');
             const btnIncome = document.getElementById('tab-income');
 
-            // Классы для активной и неактивной кнопок
             const activeClass = "px-4 py-2 bg-white text-slate-900 shadow-sm rounded-lg flex-1 sm:flex-none whitespace-nowrap transition-all";
             const inactiveClass = "px-4 py-2 text-slate-500 hover:text-slate-900 rounded-lg flex-1 sm:flex-none whitespace-nowrap transition-all";
 
-            // Сбрасываем стили
             btnPersonal.className = inactiveClass;
             btnGlobal.className = inactiveClass;
             btnIncome.className = inactiveClass;
@@ -604,279 +608,195 @@
             } else if (tabName === 'global') {
                 globalScreen.classList.remove('hidden');
                 btnGlobal.className = activeClass;
+                // Инициализация при первом клике на вкладку
                 if (!globalChartsInitialized) initGlobalCharts();
             } else if (tabName === 'income') {
                 incomeScreen.classList.remove('hidden');
                 btnIncome.className = activeClass;
+                // Инициализация при первом клике на вкладку
+                if (!incomeTabInitialized) {
+                    renderIncomeTab(globalData.income);
+                    incomeTabInitialized = true;
+                }
             }
         }
 
-        // --- ЛОГИКА ГРАФИКОВ ОБЩЕЙ СТАТИСТИКИ (БЕЗ ИЗМЕНЕНИЙ) ---
-        let globalChartsInitialized = false;
         let gRevChart, gSalesChart, gPlanChart, gConvChart, gCheckChart, gPieChart;
 
         function initGlobalCharts() {
             if (!globalData || !globalData.global) return;
             const g = globalData.global;
             const months = g.labels;
-
-            const colorNew = '#3b82f6';
-            const colorRep = '#818cf8';
+            const colorNew = '#3b82f6'; const colorRep = '#818cf8';
 
             Chart.defaults.font.family = 'Inter';
 
-            if (window.gRevChart) window.gRevChart.destroy();
-            window.gRevChart = new Chart(document.getElementById('globalRevenueChart'), {
-                type: 'bar',
-                data: {
-                    labels: months,
-                    datasets: [
+            lazyLoadChart('globalRevenueChart', () => {
+                if (window.gRevChart) window.gRevChart.destroy();
+                window.gRevChart = new Chart(document.getElementById('globalRevenueChart'), {
+                    type: 'bar',
+                    data: { labels: months, datasets: [
                         { label: 'Новые', data: g.revNew, backgroundColor: colorNew, borderRadius: 4, datalabels: { display: false } },
-                        { label: 'Повторные', data: g.revRep, backgroundColor: colorRep, borderRadius: 4,
-                            datalabels: {
-                                display: true, align: 'top', anchor: 'end', color: '#475569', font: { weight: 'bold', size: 11 },
-                                formatter: (val, ctx) => {
-                                    const total = ctx.chart.data.datasets[0].data[ctx.dataIndex] + ctx.chart.data.datasets[1].data[ctx.dataIndex];
-                                    if(total === 0) return '';
-                                    if(total >= 1000000) return (total/1000000).toFixed(2) + 'M';
-                                    if(total >= 1000) return (total/1000).toFixed(0) + 'k';
-                                    return total;
-                                }
-                            }
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 25 } } },
-                    scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, border: {display: false}, grid: { borderDash: [4, 4] }, grace: '20%' } }
-                }
+                        { label: 'Повторные', data: g.revRep, backgroundColor: colorRep, borderRadius: 4, datalabels: { display: true, align: 'top', anchor: 'end', color: '#475569', font: { weight: 'bold', size: 11 }, formatter: (val, ctx) => { const total = ctx.chart.data.datasets[0].data[ctx.dataIndex] + ctx.chart.data.datasets[1].data[ctx.dataIndex]; if(total === 0) return ''; if(total >= 1000000) return (total/1000000).toFixed(2) + 'M'; if(total >= 1000) return (total/1000).toFixed(0) + 'k'; return total; } } }
+                    ]},
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 25 } } }, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, border: {display: false}, grid: { borderDash: [4, 4] }, grace: '20%' } } }
+                });
             });
 
-            if (window.gPieChart) window.gPieChart.destroy();
-            window.gPieChart = new Chart(document.getElementById('globalPieChart'), {
-                type: 'doughnut',
-                data: { labels: ['Новые', 'Повторные'], datasets: [{ data: g.pie, backgroundColor: [colorNew, colorRep], borderWidth: 0 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '65%', layout: { padding: 15 },
-                    plugins: { 
-                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 15 } }, 
-                        datalabels: { 
-                            color: '#fff', font: {weight: 'bold', size: 11}, textAlign: 'center',
-                            formatter: (value, ctx) => {
-                                if (value === 0) return '';
-                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                                const percent = Math.round((value / total) * 100) + '%';
-                                let formattedVal = value >= 1000000 ? (value/1000000).toFixed(1) + 'M' : (value >= 1000 ? (value/1000).toFixed(0) + 'k' : value);
-                                return `${formattedVal}\n(${percent})`;
-                            } 
-                        } 
-                    }
-                }
+            lazyLoadChart('globalPieChart', () => {
+                if (window.gPieChart) window.gPieChart.destroy();
+                window.gPieChart = new Chart(document.getElementById('globalPieChart'), {
+                    type: 'doughnut', data: { labels: ['Новые', 'Повторные'], datasets: [{ data: g.pie, backgroundColor: [colorNew, colorRep], borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', layout: { padding: 15 }, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 15 } }, datalabels: { color: '#fff', font: {weight: 'bold', size: 11}, textAlign: 'center', formatter: (v, ctx) => { if (v === 0) return ''; const total = ctx.dataset.data.reduce((a, b) => a + b, 0); return `${v >= 1000000 ? (v/1000000).toFixed(1) + 'M' : (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v)}\n(${Math.round((v / total) * 100)}%)`; } } } }
+                });
             });
 
-            if (window.gSalesChart) window.gSalesChart.destroy();
-            window.gSalesChart = new Chart(document.getElementById('globalSalesChart'), {
-                type: 'bar',
-                data: {
-                    labels: months,
-                    datasets: [
-                        { label: 'Новые продажи', data: g.salesNew, backgroundColor: colorNew, borderRadius: 4, datalabels: { display: false } },
-                        { label: 'Повторные продажи', data: g.salesRep, backgroundColor: colorRep, borderRadius: 4,
-                          datalabels: {
-                              display: true, align: 'top', anchor: 'end', color: '#475569', font: { weight: 'bold', size: 11 },
-                              formatter: (val, ctx) => {
-                                  const total = ctx.chart.data.datasets[0].data[ctx.dataIndex] + ctx.chart.data.datasets[1].data[ctx.dataIndex];
-                                  return total > 0 ? total : '';
-                              }
-                          }
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 25 } } },
-                    scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, border: {display: false}, grace: '20%' } }
-                }
+            lazyLoadChart('globalSalesChart', () => {
+                if (window.gSalesChart) window.gSalesChart.destroy();
+                window.gSalesChart = new Chart(document.getElementById('globalSalesChart'), {
+                    type: 'bar', data: { labels: months, datasets: [ { label: 'Новые продажи', data: g.salesNew, backgroundColor: colorNew, borderRadius: 4, datalabels: { display: false } }, { label: 'Повторные продажи', data: g.salesRep, backgroundColor: colorRep, borderRadius: 4, datalabels: { display: true, align: 'top', anchor: 'end', color: '#475569', font: { weight: 'bold', size: 11 }, formatter: (v, ctx) => { const total = ctx.chart.data.datasets[0].data[ctx.dataIndex] + ctx.chart.data.datasets[1].data[ctx.dataIndex]; return total > 0 ? total : ''; } } } ] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 25 } } }, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, border: {display: false}, grace: '20%' } } }
+                });
             });
 
-            if (window.gPlanChart) window.gPlanChart.destroy();
-            window.gPlanChart = new Chart(document.getElementById('globalPlanChart'), {
-                type: 'bar',
-                data: {
-                    labels: months,
-                    datasets: [{
-                        label: '% выполнения', data: g.planPercent,
-                        backgroundColor: (ctx) => ctx.raw >= 100 ? '#10b981' : '#f43f5e', borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 25 } },
-                        datalabels: { color: '#fff', align: 'center', font: {weight: 'bold'}, formatter: (v) => v > 0 ? v + '%' : '' } 
-                    },
-                    scales: { x: { grid: { display: false } }, y: { display: false, grace: '20%' } }
-                }
+            lazyLoadChart('globalPlanChart', () => {
+                if (window.gPlanChart) window.gPlanChart.destroy();
+                window.gPlanChart = new Chart(document.getElementById('globalPlanChart'), {
+                    type: 'bar', data: { labels: months, datasets: [{ label: '% выполнения', data: g.planPercent, backgroundColor: (ctx) => ctx.raw >= 100 ? '#10b981' : '#f43f5e', borderRadius: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { usePointStyle: true, boxWidth: 8, padding: 25 } }, datalabels: { color: '#fff', align: 'center', font: {weight: 'bold'}, formatter: (v) => v > 0 ? v + '%' : '' } }, scales: { x: { grid: { display: false } }, y: { display: false, grace: '20%' } } }
+                });
             });
 
-            if (window.gConvChart) window.gConvChart.destroy();
-            window.gConvChart = new Chart(document.getElementById('globalConvChart'), {
-                type: 'line',
-                data: { labels: months, datasets: [{ data: g.conversion, borderColor: '#10b981', fill: true, backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.4, borderWidth: 3 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 15, bottom: 10, left: 15, right: 15 } },
-                    plugins: { legend: {display: false}, datalabels: { display: true, align: 'top', color: '#10b981', font: {weight: 'bold', size: 12}, formatter: (v) => v > 0 ? Math.round(v) + '%' : '' } },
-                    scales: { x: { display: false }, y: { display: false, min: 0, grace: '25%' } }
-                }
+            lazyLoadChart('globalConvChart', () => {
+                if (window.gConvChart) window.gConvChart.destroy();
+                window.gConvChart = new Chart(document.getElementById('globalConvChart'), {
+                    type: 'line', data: { labels: months, datasets: [{ data: g.conversion, borderColor: '#10b981', fill: true, backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.4, borderWidth: 3 }] },
+                    options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 15, bottom: 10, left: 15, right: 15 } }, plugins: { legend: {display: false}, datalabels: { display: true, align: 'top', color: '#10b981', font: {weight: 'bold', size: 12}, formatter: (v) => v > 0 ? Math.round(v) + '%' : '' } }, scales: { x: { display: false }, y: { display: false, min: 0, grace: '25%' } } }
+                });
             });
 
-            if (window.gCheckChart) window.gCheckChart.destroy();
-            window.gCheckChart = new Chart(document.getElementById('globalCheckChart'), {
-                type: 'line',
-                data: { labels: months, datasets: [{ data: g.avgCheck, borderColor: '#3b82f6', fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4, borderWidth: 3 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 15, bottom: 10, left: 20, right: 20 } },
-                    plugins: { legend: {display: false}, datalabels: { display: true, align: 'top', color: '#3b82f6', font: {weight: 'bold', size: 11}, formatter: (v) => v > 0 ? new Intl.NumberFormat('ru-RU').format(Math.round(v)) : '' } },
-                    scales: { x: { display: false }, y: { display: false, min: 0, grace: '25%' } }
-                }
+            lazyLoadChart('globalCheckChart', () => {
+                if (window.gCheckChart) window.gCheckChart.destroy();
+                window.gCheckChart = new Chart(document.getElementById('globalCheckChart'), {
+                    type: 'line', data: { labels: months, datasets: [{ data: g.avgCheck, borderColor: '#3b82f6', fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4, borderWidth: 3 }] },
+                    options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 15, bottom: 10, left: 20, right: 20 } }, plugins: { legend: {display: false}, datalabels: { display: true, align: 'top', color: '#3b82f6', font: {weight: 'bold', size: 11}, formatter: (v) => v > 0 ? new Intl.NumberFormat('ru-RU').format(Math.round(v)) : '' } }, scales: { x: { display: false }, y: { display: false, min: 0, grace: '25%' } } }
+                });
             });
 
-            if (window.gLeadsChart) window.gLeadsChart.destroy();
-            window.gLeadsChart = new Chart(document.getElementById('globalLeadsChart'), {
-                type: 'line',
-                data: { labels: months, datasets: [{ data: g.leads, borderColor: '#a855f7', fill: true, backgroundColor: 'rgba(168, 85, 247, 0.1)', tension: 0.4, borderWidth: 3 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 15, bottom: 10, left: 15, right: 15 } },
-                    plugins: { legend: {display: false}, datalabels: { display: true, align: 'top', color: '#a855f7', font: {weight: 'bold', size: 12}, formatter: (v) => v > 0 ? v : '' } },
-                    scales: { x: { display: false }, y: { display: false, min: 0, grace: '25%' } }
-                }
+            lazyLoadChart('globalLeadsChart', () => {
+                if (window.gLeadsChart) window.gLeadsChart.destroy();
+                window.gLeadsChart = new Chart(document.getElementById('globalLeadsChart'), {
+                    type: 'line', data: { labels: months, datasets: [{ data: g.leads, borderColor: '#a855f7', fill: true, backgroundColor: 'rgba(168, 85, 247, 0.1)', tension: 0.4, borderWidth: 3 }] },
+                    options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 15, bottom: 10, left: 15, right: 15 } }, plugins: { legend: {display: false}, datalabels: { display: true, align: 'top', color: '#a855f7', font: {weight: 'bold', size: 12}, formatter: (v) => v > 0 ? v : '' } }, scales: { x: { display: false }, y: { display: false, min: 0, grace: '25%' } } }
+                });
             });
 
             globalChartsInitialized = true;
         }
 
-        // --- НОВАЯ ЛОГИКА: РЕНДЕР ВКЛАДКИ ДОХОДА ---
-      // Глобальная переменная для хранения заказов и фильтрации
-// Глобальные переменные для работы вкладки
-let currentIncomeOrders = [];
-let incomeChartInstance = null; // Обязательно выносим сюда!
+        let currentIncomeOrders = [];
+        let incomeChartInstance = null; 
 
-function renderIncomeTab(income) {
-    if (!income) return;
+        function renderIncomeTab(income) {
+            if (!income) return;
 
-    currentIncomeOrders = income.orders || [];
-    
-    // 1. Отрисовка фильтра (с правильной хронологической сортировкой)
-    const filterEl = document.getElementById('month-filter');
-    filterEl.innerHTML = '<option value="all">За все время</option>';
-    
-    const uniqueMonthsMap = new Map();
-    currentIncomeOrders.forEach(o => {
-        if (o.monthId && o.monthId !== "Неизвестно") {
-            uniqueMonthsMap.set(o.monthId, o.monthLabel);
-        }
-    });
-
-    // Сортируем технические ключи (например: "2025-05", "2026-01")
-    const sortedMonthIds = Array.from(uniqueMonthsMap.keys()).sort();
-    
-    sortedMonthIds.forEach(id => {
-        const opt = document.createElement('option');
-        opt.value = id; // Передаем технический ID для точной фильтрации
-        opt.innerText = uniqueMonthsMap.get(id); // Отображаем красивое "Май 2026"
-        filterEl.appendChild(opt);
-    });
-
-    // 2. Рендер таблицы
-    renderOrdersTable('all');
-
-    // 3. Отрисовка графика (теперь хронологическая)
-    const ctx = document.getElementById('incomeChart').getContext('2d');
-    if (incomeChartInstance) incomeChartInstance.destroy();
-    
-    if (income.history && income.history.labels && income.history.labels.length > 0) {
-        incomeChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: income.history.labels,
-                datasets: [{
-                    label: 'Итоговый доход',
-                    data: income.history.values,
-                    backgroundColor: '#10b981',
-                    borderRadius: 4,
-                    datalabels: {
-                        display: true, align: 'top', anchor: 'end',
-                        color: '#047857', font: { weight: 'bold', size: 11 },
-                        formatter: (val) => val > 0 ? formatMoney(val) : ''
-                    }
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { 
-                    x: { grid: { display: false } }, 
-                    y: { border: {display: false}, grid: { borderDash: [4, 4] }, grace: '20%' } 
+            currentIncomeOrders = income.orders || [];
+            
+            const filterEl = document.getElementById('month-filter');
+            filterEl.innerHTML = '<option value="all">За все время</option>';
+            
+            const uniqueMonthsMap = new Map();
+            currentIncomeOrders.forEach(o => {
+                if (o.monthId && o.monthId !== "Неизвестно") {
+                    uniqueMonthsMap.set(o.monthId, o.monthLabel);
                 }
+            });
+
+            const sortedMonthIds = Array.from(uniqueMonthsMap.keys()).sort();
+            
+            sortedMonthIds.forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id; 
+                opt.innerText = uniqueMonthsMap.get(id); 
+                filterEl.appendChild(opt);
+            });
+
+            renderOrdersTable('all');
+
+            lazyLoadChart('incomeChart', () => {
+                const ctx = document.getElementById('incomeChart').getContext('2d');
+                if (incomeChartInstance) incomeChartInstance.destroy();
+                
+                if (income.history && income.history.labels && income.history.labels.length > 0) {
+                    incomeChartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: income.history.labels,
+                            datasets: [{
+                                label: 'Итоговый доход', data: income.history.values, backgroundColor: '#10b981', borderRadius: 4,
+                                datalabels: { display: true, align: 'top', anchor: 'end', color: '#047857', font: { weight: 'bold', size: 11 }, formatter: (val) => val > 0 ? formatMoney(val) : '' }
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { border: {display: false}, grid: { borderDash: [4, 4] }, grace: '20%' } } }
+                    });
+                }
+            });
+        }
+
+        function renderOrdersTable(filterValue) {
+            const tbody = document.getElementById('orders-table-body');
+            tbody.innerHTML = '';
+            
+            let filteredOrders = currentIncomeOrders;
+            if (filterValue !== 'all') {
+                filteredOrders = currentIncomeOrders.filter(o => o.monthId === filterValue);
             }
-        });
-    }
-}
 
-function renderOrdersTable(filterValue) {
-    const tbody = document.getElementById('orders-table-body');
-    tbody.innerHTML = '';
-    
-    let filteredOrders = currentIncomeOrders;
-    if (filterValue !== 'all') {
-        filteredOrders = currentIncomeOrders.filter(o => o.monthId === filterValue);
-    }
+            if (filteredOrders.length > 0) {
+                // Создание элементов через Fragment для большей производительности
+                const fragment = document.createDocumentFragment();
+                filteredOrders.forEach(order => {
+                    const tr = document.createElement('tr');
+                    
+                    const mfgBadge = order.isManufactured 
+                        ? `<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold border border-emerald-200">Да</span>` 
+                        : `<span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-md text-xs font-bold border border-amber-200">Нет</span>`;
 
-    if (filteredOrders.length > 0) {
-        filteredOrders.forEach(order => {
-            const tr = document.createElement('tr');
-            
-            const mfgBadge = order.isManufactured 
-                ? `<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold border border-emerald-200">Да</span>` 
-                : `<span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-md text-xs font-bold border border-amber-200">Нет</span>`;
+                    const statusStr = String(order.paymentStatus || '').toLowerCase().trim();
+                    let statusBadge = '';
+                    
+                    if (['выплачен', 'выплачено', 'да', 'оплачен', 'true'].includes(statusStr)) {
+                        statusBadge = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">Выплачен</span>`;
+                    } else if (statusStr === 'false' || (statusStr !== '-' && statusStr !== '')) {
+                        statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">Невыплачено</span>`;
+                    } else {
+                        statusBadge = `<span class="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">-</span>`;
+                    }
 
-            const statusStr = String(order.paymentStatus || '').toLowerCase().trim();
-            let statusBadge = '';
-            
-            // ДОБАВЛЕНО РАСПОЗНАВАНИЕ ГАЛОЧКИ ('true')
-            if (statusStr === 'выплачен' || statusStr === 'выплачено' || statusStr === 'да' || statusStr === 'оплачен' || statusStr === 'true') {
-                statusBadge = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">Выплачен</span>`;
-            } else if (statusStr === 'false' || (statusStr !== '-' && statusStr !== '')) {
-                statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">Невыплачено</span>`;
+                    tr.innerHTML = `
+                        <td class="px-5 py-4">${order.date}</td>
+                        <td class="px-5 py-4 font-semibold text-slate-900">${order.orderId}</td>
+                        <td class="px-5 py-4">${formatMoney(order.revPlan)}</td>
+                        <td class="px-5 py-4 ${order.debt > 0 ? 'text-rose-500 font-medium' : ''}">${formatMoney(order.debt)}</td>
+                        <td class="px-5 py-4">${mfgBadge}</td>
+                        <td class="px-5 py-4">${formatMoney(order.baseIncome)}</td>
+                        <td class="px-5 py-4">${order.coeff}</td>
+                        <td class="px-5 py-4">${formatMoney(order.overprice)}</td>
+                        <td class="px-5 py-4 text-emerald-600 font-bold">${formatMoney(order.totalIncome)}</td>
+                        <td class="px-5 py-4">${statusBadge}</td>
+                    `;
+                    fragment.appendChild(tr);
+                });
+                tbody.appendChild(fragment);
             } else {
-                statusBadge = `<span class="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">-</span>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="px-5 py-8 text-center text-slate-500">Заказов пока нет</td></tr>`;
             }
+        }
 
-            tr.innerHTML = `
-                <td class="px-5 py-4">${order.date}</td>
-                <td class="px-5 py-4 font-semibold text-slate-900">${order.orderId}</td>
-                <td class="px-5 py-4">${formatMoney(order.revPlan)}</td>
-                <td class="px-5 py-4 ${order.debt > 0 ? 'text-rose-500 font-medium' : ''}">${formatMoney(order.debt)}</td>
-                <td class="px-5 py-4">${mfgBadge}</td>
-                <td class="px-5 py-4">${formatMoney(order.baseIncome)}</td>
-                <td class="px-5 py-4">${order.coeff}</td>
-                <td class="px-5 py-4">${formatMoney(order.overprice)}</td>
-                <td class="px-5 py-4 text-emerald-600 font-bold">${formatMoney(order.totalIncome)}</td>
-                <td class="px-5 py-4">${statusBadge}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    } else {
-        tbody.innerHTML = `<tr><td colspan="10" class="px-5 py-8 text-center text-slate-500">Заказов пока нет</td></tr>`;
-    }
-}
-
-// Вызывается при изменении селекта
-function filterOrdersTable() {
-    const val = document.getElementById('month-filter').value;
-    renderOrdersTable(val);
-}
+        function filterOrdersTable() {
+            const val = document.getElementById('month-filter').value;
+            renderOrdersTable(val);
+        }
     </script>
 </body>
 </html>
