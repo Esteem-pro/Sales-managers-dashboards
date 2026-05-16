@@ -758,35 +758,44 @@
 
         // --- НОВАЯ ЛОГИКА: РЕНДЕР ВКЛАДКИ ДОХОДА ---
       // Глобальная переменная для хранения заказов и фильтрации
+// Глобальные переменные для работы вкладки
 let currentIncomeOrders = [];
+let incomeChartInstance = null; // Обязательно выносим сюда!
 
 function renderIncomeTab(income) {
     if (!income) return;
 
-    // Сохраняем заказы глобально
     currentIncomeOrders = income.orders || [];
     
-    // 1. Заполняем фильтр "Месяц + Год"
+    // 1. Отрисовка фильтра (с правильной хронологической сортировкой)
     const filterEl = document.getElementById('month-filter');
     filterEl.innerHTML = '<option value="all">За все время</option>';
     
-    // Собираем уникальные месяцы (например, "Май 2026")
-    const uniqueMonths = [...new Set(currentIncomeOrders.map(o => o.monthYear).filter(m => m !== "Неизвестно"))];
-    uniqueMonths.forEach(m => {
+    const uniqueMonthsMap = new Map();
+    currentIncomeOrders.forEach(o => {
+        if (o.monthId && o.monthId !== "Неизвестно") {
+            uniqueMonthsMap.set(o.monthId, o.monthLabel);
+        }
+    });
+
+    // Сортируем технические ключи (например: "2025-05", "2026-01")
+    const sortedMonthIds = Array.from(uniqueMonthsMap.keys()).sort();
+    
+    sortedMonthIds.forEach(id => {
         const opt = document.createElement('option');
-        opt.value = m;
-        opt.innerText = m;
+        opt.value = id; // Передаем технический ID для точной фильтрации
+        opt.innerText = uniqueMonthsMap.get(id); // Отображаем красивое "Май 2026"
         filterEl.appendChild(opt);
     });
 
-    // 2. Первоначальный рендер таблицы
+    // 2. Рендер таблицы
     renderOrdersTable('all');
 
-    // 3. График истории доходов
+    // 3. Отрисовка графика (теперь хронологическая)
+    const ctx = document.getElementById('incomeChart').getContext('2d');
+    if (incomeChartInstance) incomeChartInstance.destroy();
+    
     if (income.history && income.history.labels && income.history.labels.length > 0) {
-        const ctx = document.getElementById('incomeChart').getContext('2d');
-        if (incomeChartInstance) incomeChartInstance.destroy();
-        
         incomeChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -797,11 +806,8 @@ function renderIncomeTab(income) {
                     backgroundColor: '#10b981',
                     borderRadius: 4,
                     datalabels: {
-                        display: true,
-                        align: 'top',
-                        anchor: 'end',
-                        color: '#047857',
-                        font: { weight: 'bold', size: 11 },
+                        display: true, align: 'top', anchor: 'end',
+                        color: '#047857', font: { weight: 'bold', size: 11 },
                         formatter: (val) => val > 0 ? formatMoney(val) : ''
                     }
                 }]
@@ -818,34 +824,32 @@ function renderIncomeTab(income) {
     }
 }
 
-// Функция для отрисовки строк таблицы на основе фильтра
 function renderOrdersTable(filterValue) {
     const tbody = document.getElementById('orders-table-body');
     tbody.innerHTML = '';
     
     let filteredOrders = currentIncomeOrders;
     if (filterValue !== 'all') {
-        filteredOrders = currentIncomeOrders.filter(o => o.monthYear === filterValue);
+        filteredOrders = currentIncomeOrders.filter(o => o.monthId === filterValue);
     }
 
     if (filteredOrders.length > 0) {
         filteredOrders.forEach(order => {
             const tr = document.createElement('tr');
             
-            // Бейдж изготовления
             const mfgBadge = order.isManufactured 
                 ? `<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold border border-emerald-200">Да</span>` 
                 : `<span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-md text-xs font-bold border border-amber-200">Нет</span>`;
 
-            // Жесткая логика бейджа статуса (Зеленый или Красный)
             const statusStr = String(order.paymentStatus || '').toLowerCase().trim();
             let statusBadge = '';
             
-            // Если статус содержит слова-маркеры успешной оплаты
             if (statusStr === 'выплачен' || statusStr === 'выплачено' || statusStr === 'да' || statusStr === 'оплачен') {
                 statusBadge = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">Выплачен</span>`;
-            } else {
+            } else if (statusStr !== '-' && statusStr !== '') {
                 statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">Невыплачено</span>`;
+            } else {
+                statusBadge = `<span class="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">-</span>`;
             }
 
             tr.innerHTML = `
@@ -867,7 +871,7 @@ function renderOrdersTable(filterValue) {
     }
 }
 
-// Обработчик события изменения селекта
+// Вызывается при изменении селекта
 function filterOrdersTable() {
     const val = document.getElementById('month-filter').value;
     renderOrdersTable(val);
