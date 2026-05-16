@@ -844,9 +844,10 @@ function renderOrdersTable(filterValue) {
             const statusStr = String(order.paymentStatus || '').toLowerCase().trim();
             let statusBadge = '';
             
-            if (statusStr === 'выплачен' || statusStr === 'выплачено' || statusStr === 'да' || statusStr === 'оплачен') {
+            // ДОБАВЛЕНО РАСПОЗНАВАНИЕ ГАЛОЧКИ ('true')
+            if (statusStr === 'выплачен' || statusStr === 'выплачено' || statusStr === 'да' || statusStr === 'оплачен' || statusStr === 'true') {
                 statusBadge = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">Выплачен</span>`;
-            } else if (statusStr !== '-' && statusStr !== '') {
+            } else if (statusStr === 'false' || (statusStr !== '-' && statusStr !== '')) {
                 statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">Невыплачено</span>`;
             } else {
                 statusBadge = `<span class="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">-</span>`;
