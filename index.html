@@ -266,59 +266,48 @@
         </div>
 
         <div id="income-screen" class="hidden scroll-area w-full">
-            <div class="max-w-7xl mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
-                
-                <div class="bento-card border-none shadow-md bg-gradient-to-br from-emerald-50 to-white">
-                    <span class="metric-title text-emerald-800">Доход за текущий месяц</span>
-                    <div class="metric-value text-emerald-600 mt-auto" id="inc-total">0 ₽</div>
-                </div>
-
-                <div class="bento-card">
-                    <span class="metric-title">Доход с оверпрайса</span>
-                    <div class="metric-value mt-auto" id="inc-overprice">0 ₽</div>
-                </div>
-
-                <div class="bento-card">
-                    <span class="metric-title">Средний коэф. плана</span>
-                    <div class="metric-value mt-auto" id="inc-coeff">0</div>
-                </div>
-
-                <div class="bento-card lg:col-span-3">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="metric-title mb-0">История доходов (по месяцам)</span>
-                    </div>
-                    <div class="relative w-full h-60">
-                        <canvas id="incomeChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="bento-card lg:col-span-3 overflow-hidden p-0">
-                    <div class="p-5 border-b border-slate-100">
-                        <span class="metric-title mb-0">Детализация заказов</span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-slate-50 text-slate-500 font-medium">
-                                <tr>
-                                    <th class="px-5 py-4">Дата</th>
-                                    <th class="px-5 py-4">ID заказа</th>
-                                    <th class="px-5 py-4">Выручка (План)</th>
-                                    <th class="px-5 py-4">Задолженность</th>
-                                    <th class="px-5 py-4">Изготовлен</th>
-                                    <th class="px-5 py-4">База</th>
-                                    <th class="px-5 py-4">Коэф.</th>
-                                    <th class="px-5 py-4">Оверпрайс</th>
-                                    <th class="px-5 py-4 text-emerald-600 font-bold">Итоговый доход</th>
-                                    <th class="px-5 py-4">Статус</th>
-                                </tr>
-                            </thead>
-                            <tbody id="orders-table-body" class="divide-y divide-slate-100 text-slate-700">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
+    <div class="max-w-7xl mx-auto p-4 sm:p-6 grid grid-cols-1 gap-5">
+        
+        <div class="bento-card">
+            <div class="flex justify-between items-center mb-4">
+                <span class="metric-title mb-0">История доходов (по месяцам)</span>
+            </div>
+            <div class="relative w-full h-60">
+                <canvas id="incomeChart"></canvas>
             </div>
         </div>
+
+        <div class="bento-card overflow-hidden p-0">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white flex-col sm:flex-row gap-4">
+                <span class="metric-title mb-0">Детализация заказов</span>
+                
+                <select id="month-filter" onchange="filterOrdersTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none font-medium min-w-[180px]">
+                    <option value="all">За все время</option>
+                </select>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead class="bg-slate-50 text-slate-500 font-medium">
+                        <tr>
+                            <th class="px-5 py-4">Дата</th>
+                            <th class="px-5 py-4">ID заказа</th>
+                            <th class="px-5 py-4">Выручка (План)</th>
+                            <th class="px-5 py-4">Задолженность</th>
+                            <th class="px-5 py-4">Изготовлен</th>
+                            <th class="px-5 py-4">База</th>
+                            <th class="px-5 py-4">Коэф.</th>
+                            <th class="px-5 py-4">Оверпрайс</th>
+                            <th class="px-5 py-4 text-emerald-600 font-bold">Итоговый доход</th>
+                            <th class="px-5 py-4">Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body" class="divide-y divide-slate-100 text-slate-700">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
     </div> 
 
@@ -768,81 +757,121 @@
         }
 
         // --- НОВАЯ ЛОГИКА: РЕНДЕР ВКЛАДКИ ДОХОДА ---
-        let incomeChartInstance = null;
+      // Глобальная переменная для хранения заказов и фильтрации
+let currentIncomeOrders = [];
 
-        function renderIncomeTab(income) {
-            if (!income) return;
+function renderIncomeTab(income) {
+    if (!income) return;
 
-            // Метрики
-            document.getElementById('inc-total').innerText = formatMoney(income.totalCurrent);
-            document.getElementById('inc-overprice').innerText = formatMoney(income.overpriceTotal);
-            document.getElementById('inc-coeff').innerText = (income.avgCoeff || 0).toFixed(2);
+    // Сохраняем заказы глобально
+    currentIncomeOrders = income.orders || [];
+    
+    // 1. Заполняем фильтр "Месяц + Год"
+    const filterEl = document.getElementById('month-filter');
+    filterEl.innerHTML = '<option value="all">За все время</option>';
+    
+    // Собираем уникальные месяцы (например, "Май 2026")
+    const uniqueMonths = [...new Set(currentIncomeOrders.map(o => o.monthYear).filter(m => m !== "Неизвестно"))];
+    uniqueMonths.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.innerText = m;
+        filterEl.appendChild(opt);
+    });
 
-            // Таблица
-            const tbody = document.getElementById('orders-table-body');
-            tbody.innerHTML = '';
-            
-            if (income.orders && income.orders.length > 0) {
-                income.orders.forEach(order => {
-                    const tr = document.createElement('tr');
-                    
-                    const mfgBadge = order.isManufactured 
-                        ? `<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold border border-emerald-200">Да</span>` 
-                        : `<span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-md text-xs font-bold border border-amber-200">Нет</span>`;
+    // 2. Первоначальный рендер таблицы
+    renderOrdersTable('all');
 
-                    tr.innerHTML = `
-                        <td class="px-5 py-4">${order.date}</td>
-                        <td class="px-5 py-4 font-semibold text-slate-900">${order.orderId}</td>
-                        <td class="px-5 py-4">${formatMoney(order.revPlan)}</td>
-                        <td class="px-5 py-4 ${order.debt > 0 ? 'text-rose-500 font-medium' : ''}">${formatMoney(order.debt)}</td>
-                        <td class="px-5 py-4">${mfgBadge}</td>
-                        <td class="px-5 py-4">${formatMoney(order.baseIncome)}</td>
-                        <td class="px-5 py-4">${order.coeff}</td>
-                        <td class="px-5 py-4">${formatMoney(order.overprice)}</td>
-                        <td class="px-5 py-4 text-emerald-600 font-bold">${formatMoney(order.totalIncome)}</td>
-                        <td class="px-5 py-4"><span class="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">${order.paymentStatus}</span></td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="10" class="px-5 py-8 text-center text-slate-500">Заказов пока нет</td></tr>`;
-            }
-
-            // График истории
-            if (income.history && income.history.labels && income.history.labels.length > 0) {
-                const ctx = document.getElementById('incomeChart').getContext('2d');
-                if (incomeChartInstance) incomeChartInstance.destroy();
-                
-                incomeChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: income.history.labels,
-                        datasets: [{
-                            label: 'Итоговый доход',
-                            data: income.history.values,
-                            backgroundColor: '#10b981',
-                            borderRadius: 4,
-                            datalabels: {
-                                display: true,
-                                align: 'top',
-                                anchor: 'end',
-                                color: '#047857',
-                                font: { weight: 'bold', size: 11 },
-                                formatter: (val) => val > 0 ? formatMoney(val) : ''
-                            }
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { 
-                            x: { grid: { display: false } }, 
-                            y: { border: {display: false}, grid: { borderDash: [4, 4] }, grace: '20%' } 
-                        }
+    // 3. График истории доходов
+    if (income.history && income.history.labels && income.history.labels.length > 0) {
+        const ctx = document.getElementById('incomeChart').getContext('2d');
+        if (incomeChartInstance) incomeChartInstance.destroy();
+        
+        incomeChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: income.history.labels,
+                datasets: [{
+                    label: 'Итоговый доход',
+                    data: income.history.values,
+                    backgroundColor: '#10b981',
+                    borderRadius: 4,
+                    datalabels: {
+                        display: true,
+                        align: 'top',
+                        anchor: 'end',
+                        color: '#047857',
+                        font: { weight: 'bold', size: 11 },
+                        formatter: (val) => val > 0 ? formatMoney(val) : ''
                     }
-                });
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    x: { grid: { display: false } }, 
+                    y: { border: {display: false}, grid: { borderDash: [4, 4] }, grace: '20%' } 
+                }
             }
-        }
+        });
+    }
+}
+
+// Функция для отрисовки строк таблицы на основе фильтра
+function renderOrdersTable(filterValue) {
+    const tbody = document.getElementById('orders-table-body');
+    tbody.innerHTML = '';
+    
+    let filteredOrders = currentIncomeOrders;
+    if (filterValue !== 'all') {
+        filteredOrders = currentIncomeOrders.filter(o => o.monthYear === filterValue);
+    }
+
+    if (filteredOrders.length > 0) {
+        filteredOrders.forEach(order => {
+            const tr = document.createElement('tr');
+            
+            // Бейдж изготовления
+            const mfgBadge = order.isManufactured 
+                ? `<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold border border-emerald-200">Да</span>` 
+                : `<span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-md text-xs font-bold border border-amber-200">Нет</span>`;
+
+            // Жесткая логика бейджа статуса (Зеленый или Красный)
+            const statusStr = String(order.paymentStatus || '').toLowerCase().trim();
+            let statusBadge = '';
+            
+            // Если статус содержит слова-маркеры успешной оплаты
+            if (statusStr === 'выплачен' || statusStr === 'выплачено' || statusStr === 'да' || statusStr === 'оплачен') {
+                statusBadge = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">Выплачен</span>`;
+            } else {
+                statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">Невыплачено</span>`;
+            }
+
+            tr.innerHTML = `
+                <td class="px-5 py-4">${order.date}</td>
+                <td class="px-5 py-4 font-semibold text-slate-900">${order.orderId}</td>
+                <td class="px-5 py-4">${formatMoney(order.revPlan)}</td>
+                <td class="px-5 py-4 ${order.debt > 0 ? 'text-rose-500 font-medium' : ''}">${formatMoney(order.debt)}</td>
+                <td class="px-5 py-4">${mfgBadge}</td>
+                <td class="px-5 py-4">${formatMoney(order.baseIncome)}</td>
+                <td class="px-5 py-4">${order.coeff}</td>
+                <td class="px-5 py-4">${formatMoney(order.overprice)}</td>
+                <td class="px-5 py-4 text-emerald-600 font-bold">${formatMoney(order.totalIncome)}</td>
+                <td class="px-5 py-4">${statusBadge}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } else {
+        tbody.innerHTML = `<tr><td colspan="10" class="px-5 py-8 text-center text-slate-500">Заказов пока нет</td></tr>`;
+    }
+}
+
+// Обработчик события изменения селекта
+function filterOrdersTable() {
+    const val = document.getElementById('month-filter').value;
+    renderOrdersTable(val);
+}
     </script>
 </body>
 </html>
