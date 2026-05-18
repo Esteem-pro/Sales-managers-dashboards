@@ -273,12 +273,19 @@
                 </div>
 
                 <div class="bento-card overflow-hidden p-0">
-                    <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white flex-col sm:flex-row gap-4">
-                        <span class="metric-title mb-0">Детализация заказов</span>
-                        <select id="month-filter" onchange="filterOrdersTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none font-medium min-w-[180px]">
-                            <option value="all">За все время</option>
-                        </select>
-                    </div>
+                   <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white flex-col sm:flex-row gap-4">
+    <span class="metric-title mb-0">Детализация заказов</span>
+    <div class="flex flex-col sm:flex-row gap-3">
+        <select id="month-filter" onchange="filterOrdersTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none font-medium min-w-[150px]">
+            <option value="all">За все время</option>
+        </select>
+        <select id="payment-status-filter" onchange="filterOrdersTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none font-medium min-w-[150px]">
+            <option value="all">Все статусы</option>
+            <option value="paid">Выплачено</option>
+            <option value="unpaid">Ожидается</option>
+        </select>
+    </div>
+</div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead class="bg-slate-50 text-slate-500 font-medium">
@@ -697,7 +704,7 @@
         let currentIncomeOrders = [];
         let incomeChartInstance = null; 
 
-        function renderIncomeTab(income) {
+                function renderIncomeTab(income) {
             if (!income) return;
 
             currentIncomeOrders = income.orders || [];
@@ -721,7 +728,9 @@
                 filterEl.appendChild(opt);
             });
 
-            renderOrdersTable('all');
+            // ВАЖНО: здесь теперь передаем два параметра ('all', 'all'), 
+            // так как мы добавили фильтр по статусу
+            renderOrdersTable('all', 'all');
 
             lazyLoadChart('incomeChart', () => {
                 const ctx = document.getElementById('incomeChart').getContext('2d');
@@ -732,71 +741,121 @@
                         type: 'bar',
                         data: {
                             labels: income.history.labels,
-                            datasets: [{
-                                label: 'Итоговый доход', data: income.history.values, backgroundColor: '#10b981', borderRadius: 4,
-                                datalabels: { display: true, align: 'top', anchor: 'end', color: '#047857', font: { weight: 'bold', size: 11 }, formatter: (val) => val > 0 ? formatMoney(val) : '' }
-                            }]
+                            datasets: [
+                                {
+                                    label: 'Выплачено', 
+                                    data: income.history.paid || [], // Данные с бэкенда
+                                    backgroundColor: '#10b981', // Изумрудный цвет (emerald-500)
+                                    stack: 'Stack 0',
+                                    borderRadius: 4,
+                                    datalabels: { display: false } // Прячем цифру внутри зеленого блока
+                                },
+                                {
+                                    label: 'Ожидается', 
+                                    data: income.history.unpaid || [], // Данные с бэкенда
+                                    backgroundColor: '#f43f5e', // Красный цвет (rose-500)
+                                    stack: 'Stack 0',
+                                    borderRadius: 4,
+                                    datalabels: { 
+                                        display: true, 
+                                        align: 'top', 
+                                        anchor: 'end', 
+                                        color: '#475569', 
+                                        font: { weight: 'bold', size: 11 }, 
+                                        // Суммируем зеленую и красную часть, чтобы показать общий итог сверху столбца
+                                        formatter: (val, context) => {
+                                            const ds = context.chart.data.datasets;
+                                            const total = (ds[0].data[context.dataIndex] || 0) + (ds[1].data[context.dataIndex] || 0);
+                                            return total > 0 ? formatMoney(total) : '';
+                                        }
+                                    }
+                                }
+                            ]
                         },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { border: {display: false}, grid: { borderDash: [4, 4] }, grace: '20%' } } }
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false, 
+                            plugins: { 
+                                legend: { display: true, position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } 
+                            }, 
+                            scales: { 
+                                x: { stacked: true, grid: { display: false } }, 
+                                y: { stacked: true, border: {display: false}, grid: { borderDash: [4, 4] }, grace: '20%' } 
+                            } 
+                        }
                     });
                 }
             });
         }
 
-        function renderOrdersTable(filterValue) {
-            const tbody = document.getElementById('orders-table-body');
-            tbody.innerHTML = '';
+        function renderOrdersTable(monthFilterValue, statusFilterValue) {
+    const tbody = document.getElementById('orders-table-body');
+    tbody.innerHTML = '';
+    
+    let filteredOrders = currentIncomeOrders;
+    
+    // 1. Фильтруем по месяцу
+    if (monthFilterValue !== 'all') {
+        filteredOrders = filteredOrders.filter(o => o.monthId === monthFilterValue);
+    }
+
+    // 2. Фильтруем по статусу
+    if (statusFilterValue !== 'all') {
+        filteredOrders = filteredOrders.filter(order => {
+            const statusStr = String(order.paymentStatus || '').toLowerCase().trim();
+            const isPaid = ['выплачен', 'выплачено', 'да', 'оплачен', 'true'].includes(statusStr);
             
-            let filteredOrders = currentIncomeOrders;
-            if (filterValue !== 'all') {
-                filteredOrders = currentIncomeOrders.filter(o => o.monthId === filterValue);
-            }
+            if (statusFilterValue === 'paid') return isPaid;
+            if (statusFilterValue === 'unpaid') return !isPaid && statusStr !== '-' && statusStr !== '';
+            return true;
+        });
+    }
 
-            if (filteredOrders.length > 0) {
-                // Создание элементов через Fragment для большей производительности
-                const fragment = document.createDocumentFragment();
-                filteredOrders.forEach(order => {
-                    const tr = document.createElement('tr');
-                    
-                    const mfgBadge = order.isManufactured 
-                        ? `<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold border border-emerald-200">Да</span>` 
-                        : `<span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-md text-xs font-bold border border-amber-200">Нет</span>`;
+    if (filteredOrders.length > 0) {
+        const fragment = document.createDocumentFragment();
+        filteredOrders.forEach(order => {
+            const tr = document.createElement('tr');
+            
+            const mfgBadge = order.isManufactured 
+                ? `<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold border border-emerald-200">Да</span>` 
+                : `<span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-md text-xs font-bold border border-amber-200">Нет</span>`;
 
-                    const statusStr = String(order.paymentStatus || '').toLowerCase().trim();
-                    let statusBadge = '';
-                    
-                    if (['выплачен', 'выплачено', 'да', 'оплачен', 'true'].includes(statusStr)) {
-                        statusBadge = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">Выплачен</span>`;
-                    } else if (statusStr === 'false' || (statusStr !== '-' && statusStr !== '')) {
-                        statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">Невыплачено</span>`;
-                    } else {
-                        statusBadge = `<span class="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">-</span>`;
-                    }
-
-                    tr.innerHTML = `
-                        <td class="px-5 py-4">${order.date}</td>
-                        <td class="px-5 py-4 font-semibold text-slate-900">${order.orderId}</td>
-                        <td class="px-5 py-4">${formatMoney(order.revPlan)}</td>
-                        <td class="px-5 py-4 ${order.debt > 0 ? 'text-rose-500 font-medium' : ''}">${formatMoney(order.debt)}</td>
-                        <td class="px-5 py-4">${mfgBadge}</td>
-                        <td class="px-5 py-4">${formatMoney(order.baseIncome)}</td>
-                        <td class="px-5 py-4">${order.coeff}</td>
-                        <td class="px-5 py-4">${formatMoney(order.overprice)}</td>
-                        <td class="px-5 py-4 text-emerald-600 font-bold">${formatMoney(order.totalIncome)}</td>
-                        <td class="px-5 py-4">${statusBadge}</td>
-                    `;
-                    fragment.appendChild(tr);
-                });
-                tbody.appendChild(fragment);
+            const statusStr = String(order.paymentStatus || '').toLowerCase().trim();
+            let statusBadge = '';
+            
+            if (['выплачен', 'выплачено', 'да', 'оплачен', 'true'].includes(statusStr)) {
+                statusBadge = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">Выплачен</span>`;
+            } else if (statusStr === 'false' || (statusStr !== '-' && statusStr !== '')) {
+                statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">Невыплачено</span>`;
             } else {
-                tbody.innerHTML = `<tr><td colspan="10" class="px-5 py-8 text-center text-slate-500">Заказов пока нет</td></tr>`;
+                statusBadge = `<span class="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">-</span>`;
             }
-        }
 
-        function filterOrdersTable() {
-            const val = document.getElementById('month-filter').value;
-            renderOrdersTable(val);
-        }
+            tr.innerHTML = `
+                <td class="px-5 py-4">${order.date}</td>
+                <td class="px-5 py-4 font-semibold text-slate-900">${order.orderId}</td>
+                <td class="px-5 py-4">${formatMoney(order.revPlan)}</td>
+                <td class="px-5 py-4 ${order.debt > 0 ? 'text-rose-500 font-medium' : ''}">${formatMoney(order.debt)}</td>
+                <td class="px-5 py-4">${mfgBadge}</td>
+                <td class="px-5 py-4">${formatMoney(order.baseIncome)}</td>
+                <td class="px-5 py-4">${order.coeff}</td>
+                <td class="px-5 py-4">${formatMoney(order.overprice)}</td>
+                <td class="px-5 py-4 text-emerald-600 font-bold">${formatMoney(order.totalIncome)}</td>
+                <td class="px-5 py-4">${statusBadge}</td>
+            `;
+            fragment.appendChild(tr);
+        });
+        tbody.appendChild(fragment);
+    } else {
+        tbody.innerHTML = `<tr><td colspan="10" class="px-5 py-8 text-center text-slate-500">Заказов пока нет</td></tr>`;
+    }
+}
+
+function filterOrdersTable() {
+    const monthVal = document.getElementById('month-filter').value;
+    const statusVal = document.getElementById('payment-status-filter').value;
+    renderOrdersTable(monthVal, statusVal);
+}
     </script>
 </body>
 </html>
