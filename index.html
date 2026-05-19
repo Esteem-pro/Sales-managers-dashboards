@@ -284,10 +284,11 @@
         <select id="month-filter" onchange="filterOrdersTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none font-medium min-w-[150px] w-full sm:w-auto">
             <option value="all">За все время</option>
         </select>
-        <select id="payment-status-filter" onchange="filterOrdersTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none font-medium min-w-[150px] w-full sm:w-auto">
-            <option value="all">Статус выплаты</option>
+                <select id="payment-status-filter" onchange="filterOrdersTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none font-medium min-w-[150px] w-full sm:w-auto">
+            <option value="all">Все статусы</option>
             <option value="paid">Выплачено</option>
-            <option value="unpaid">Невыплачено</option>
+            <option value="unpaid">Ожидается (Долг)</option>
+            <option value="projected">Прогноз (Тек. месяц)</option>
         </select>
     </div>
 </div>
@@ -709,7 +710,7 @@
         let currentIncomeOrders = [];
         let incomeChartInstance = null; 
 
-                      function renderIncomeTab(income) {
+                           function renderIncomeTab(income) {
             if (!income) return;
 
             currentIncomeOrders = income.orders || [];
@@ -740,9 +741,9 @@
                 if (incomeChartInstance) incomeChartInstance.destroy();
                 
                 if (income.history && income.history.labels && income.history.labels.length > 0) {
-                    // Принудительно округляем массивы до целых чисел
                     const roundedPaid = (income.history.paid || []).map(v => Math.round(v || 0));
                     const roundedUnpaid = (income.history.unpaid || []).map(v => Math.round(v || 0));
+                    const roundedProjected = (income.history.projected || []).map(v => Math.round(v || 0));
 
                     incomeChartInstance = new Chart(ctx, {
                         type: 'bar',
@@ -758,9 +759,17 @@
                                     datalabels: { display: false } 
                                 },
                                 {
-                                    label: 'Невыплачено', 
+                                    label: 'Ожидается', 
                                     data: roundedUnpaid, 
                                     backgroundColor: '#f43f5e', 
+                                    stack: 'Stack 0',
+                                    borderRadius: 4,
+                                    datalabels: { display: false } 
+                                },
+                                {
+                                    label: 'Прогноз', 
+                                    data: roundedProjected, 
+                                    backgroundColor: '#a855f7', 
                                     stack: 'Stack 0',
                                     borderRadius: 4,
                                     datalabels: { 
@@ -771,8 +780,9 @@
                                         font: { weight: 'bold', size: 11 }, 
                                         formatter: (val, context) => {
                                             const ds = context.chart.data.datasets;
-                                            // Суммируем уже округленные значения
-                                            const total = (ds[0].data[context.dataIndex] || 0) + (ds[1].data[context.dataIndex] || 0);
+                                            const total = (ds[0].data[context.dataIndex] || 0) + 
+                                                          (ds[1].data[context.dataIndex] || 0) + 
+                                                          (ds[2].data[context.dataIndex] || 0);
                                             return total > 0 ? formatMoney(total) : '';
                                         }
                                     }
@@ -784,7 +794,6 @@
                             maintainAspectRatio: false, 
                             plugins: { 
                                 legend: { display: true, position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } },
-                                // Настройка всплывающих подсказок при наведении
                                 tooltip: {
                                     mode: 'index',
                                     intersect: false,
@@ -810,77 +819,64 @@
             });
         }
 
-       function renderOrdersTable(monthFilterValue, statusFilterValue) {
-    const tbody = document.getElementById('orders-table-body');
-    tbody.innerHTML = '';
-    
-    let filteredOrders = currentIncomeOrders;
-    
-    // 1. Фильтруем массив по выбранному месяцу
-    if (monthFilterValue !== 'all') {
-        filteredOrders = filteredOrders.filter(o => o.monthId === monthFilterValue);
-    }
-
-    // 2. Фильтруем массив по выбранному статусу выплаты
-    if (statusFilterValue !== 'all') {
-        filteredOrders = filteredOrders.filter(order => {
-            const statusStr = String(order.paymentStatus || '').toLowerCase().trim();
-            const isPaid = ['выплачен', 'выплачено', 'да', 'оплачен', 'true'].includes(statusStr);
+               function renderOrdersTable(monthFilterValue, statusFilterValue) {
+            const tbody = document.getElementById('orders-table-body');
+            tbody.innerHTML = '';
             
-            if (statusFilterValue === 'paid') return isPaid;
-            if (statusFilterValue === 'unpaid') return !isPaid && statusStr !== '-' && statusStr !== '';
-            return true;
-        });
-    }
-
-    // ЛОГИКА ДИНАМИЧЕСКОГО СУММИРОВАНИЯ ОЖИДАЕМЫХ ВЫПЛАТ
-    let totalUnpaidSum = 0;
-    
-    if (filteredOrders.length > 0) {
-        const fragment = document.createDocumentFragment();
-        filteredOrders.forEach(order => {
-            const tr = document.createElement('tr');
+            let filteredOrders = currentIncomeOrders;
             
-            const mfgBadge = order.isManufactured 
-                ? `<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold border border-emerald-200">Да</span>` 
-                : `<span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-md text-xs font-bold border border-amber-200">Нет</span>`;
-
-            const statusStr = String(order.paymentStatus || '').toLowerCase().trim();
-            let statusBadge = '';
-            const isPaid = ['выплачен', 'выплачено', 'да', 'оплачен', 'true'].includes(statusStr);
-            
-            if (isPaid) {
-                statusBadge = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">Выплачен</span>`;
-            } else if (statusStr === 'false' || (statusStr !== '-' && statusStr !== '')) {
-                statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">Невыплачено</span>`;
-                // Если заказ не выплачен, плюсуем его итоговый доход к нашей сумме
-                totalUnpaidSum += (order.totalIncome || 0);
-            } else {
-                statusBadge = `<span class="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">-</span>`;
+            if (monthFilterValue !== 'all') {
+                filteredOrders = filteredOrders.filter(o => o.monthId === monthFilterValue);
+            }
+            if (statusFilterValue !== 'all') {
+                filteredOrders = filteredOrders.filter(order => order.paymentStatus === statusFilterValue);
             }
 
-            tr.innerHTML = `
-                <td class="px-5 py-4">${order.date}</td>
-                <td class="px-5 py-4 font-semibold text-slate-900">${order.orderId}</td>
-                <td class="px-5 py-4">${formatMoney(order.revPlan)}</td>
-                <td class="px-5 py-4 ${order.debt > 0 ? 'text-rose-500 font-medium' : ''}">${formatMoney(order.debt)}</td>
-                <td class="px-5 py-4">${mfgBadge}</td>
-                <td class="px-5 py-4">${formatMoney(order.baseIncome)}</td>
-                <td class="px-5 py-4">${order.coeff}</td>
-                <td class="px-5 py-4">${formatMoney(order.overprice)}</td>
-                <td class="px-5 py-4 text-emerald-600 font-bold">${formatMoney(order.totalIncome)}</td>
-                <td class="px-5 py-4">${statusBadge}</td>
-            `;
-            fragment.appendChild(tr);
-        });
-        tbody.appendChild(fragment);
-    } else {
-        tbody.innerHTML = `<tr><td colspan="10" class="px-5 py-8 text-center text-slate-500">Заказов пока нет</td></tr>`;
-    }
+            let totalUnpaidSum = 0;
+            
+            if (filteredOrders.length > 0) {
+                const fragment = document.createDocumentFragment();
+                filteredOrders.forEach(order => {
+                    const tr = document.createElement('tr');
+                    const statusStr = order.paymentStatus;
+                    
+                    const mfgBadge = order.isManufactured 
+                        ? `<span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold border border-emerald-200">Да</span>` 
+                        : `<span class="bg-amber-50 text-amber-700 px-2 py-1 rounded-md text-xs font-bold border border-amber-200">Нет</span>`;
 
-    // Выводим посчитанную сумму в плашку над таблицей
-    document.getElementById('unpaid-summary-sum').innerText = formatMoney(totalUnpaidSum);
-}
+                    let statusBadge = '';
+                    if (statusStr === 'paid') {
+                        statusBadge = `<span class="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">Выплачен</span>`;
+                    } else if (statusStr === 'projected') {
+                        statusBadge = `<span class="text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 px-2 py-1 rounded-md">Прогноз</span>`;
+                        totalUnpaidSum += (order.totalIncome || 0); 
+                    } else {
+                        statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">Невыплачено</span>`;
+                        totalUnpaidSum += (order.totalIncome || 0); 
+                    }
+
+                    tr.innerHTML = `
+                        <td class="px-5 py-4">${order.date}</td>
+                        <td class="px-5 py-4 font-semibold text-slate-900">${order.orderId}</td>
+                        <td class="px-5 py-4">${formatMoney(order.revPlan)}</td>
+                        <td class="px-5 py-4 ${order.debt > 0 ? 'text-rose-500 font-medium' : ''}">${formatMoney(order.debt)}</td>
+                        <td class="px-5 py-4">${mfgBadge}</td>
+                        <td class="px-5 py-4">${formatMoney(order.baseIncome)}</td>
+                        <td class="px-5 py-4">${order.coeff}</td>
+                        <td class="px-5 py-4">${formatMoney(order.overprice)}</td>
+                        <td class="px-5 py-4 text-emerald-600 font-bold">${formatMoney(order.totalIncome)}</td>
+                        <td class="px-5 py-4">${statusBadge}</td>
+                    `;
+                    fragment.appendChild(tr);
+                });
+                tbody.appendChild(fragment);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="10" class="px-5 py-8 text-center text-slate-500">Заказов пока нет</td></tr>`;
+            }
+
+            const summaryEl = document.getElementById('unpaid-summary-sum');
+            if (summaryEl) summaryEl.innerText = formatMoney(totalUnpaidSum);
+        }
 
 function filterOrdersTable() {
     const monthVal = document.getElementById('month-filter').value;
