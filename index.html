@@ -518,7 +518,7 @@
             fPercentEl.className = `metric-value ${forecastPercent >= 100 ? 'text-emerald-500' : 'text-rose-500'}`;
             
             const fRubEl = document.getElementById('forecast-rub');
-            fRubEl.innerText = 'Ожидается к выплате: ' + formatMoney(forecastedRev);
+            fRubEl.innerText = 'Ожидаемая выручка: ' + formatMoney(forecastedRev);
             fRubEl.className = `text-sm font-medium mt-auto ${forecastPercent >= 100 ? 'text-emerald-600' : 'text-rose-500'}`;
         }
 
@@ -851,7 +851,7 @@
                         statusBadge = `<span class="text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 px-2 py-1 rounded-md">Прогноз</span>`;
                         totalUnpaidSum += (order.totalIncome || 0); 
                     } else {
-                        statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">Ожидается к выплате</span>`;
+                        statusBadge = `<span class="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-1 rounded-md">Ожидаемая выручка</span>`;
                         totalUnpaidSum += (order.totalIncome || 0); 
                     }
 
