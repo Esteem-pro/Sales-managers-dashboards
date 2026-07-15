@@ -255,6 +255,31 @@
                             <canvas id="globalLeadsChart"></canvas>
                         </div>
                     </div>
+                    <div class="bento-card lg:col-span-3 border-t-4 border-t-rose-500">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                            <div>
+                                <span class="metric-title mb-0 text-slate-800">Дебиторская задолженность</span>
+                                <div class="text-sm font-medium mt-1">Итого долг по списку: <span id="global-debt-sum" class="font-bold text-rose-600 text-lg">0 ₽</span></div>
+                            </div>
+                            <select id="global-debt-month-filter" onchange="renderDebtTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-rose-500 focus:border-rose-500 block p-2 outline-none font-medium min-w-[150px]">
+                                <option value="all">За все время</option>
+                            </select>
+                        </div>
+                        <div class="overflow-x-auto mt-2">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 text-slate-500 font-medium whitespace-nowrap">
+                                    <tr>
+                                        <th class="px-5 py-3 rounded-tl-lg">Дата</th>
+                                        <th class="px-5 py-3">ID заказа</th>
+                                        <th class="px-5 py-3 min-w-[300px]">Описание заказа</th>
+                                        <th class="px-5 py-3 text-right rounded-tr-lg">Задолженность</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="global-debt-table-body" class="divide-y divide-slate-100 text-slate-700">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
                 </div>
             </div>
@@ -622,7 +647,7 @@
                 globalScreen.classList.remove('hidden');
                 btnGlobal.className = activeClass;
                 // Инициализация при первом клике на вкладку
-                if (!globalChartsInitialized) initGlobalCharts();
+                if (!globalChartsInitialized) initGlobalCharts();initDebtTable();
             } else if (tabName === 'income') {
                 incomeScreen.classList.remove('hidden');
                 btnIncome.className = activeClass;
@@ -883,6 +908,68 @@ function filterOrdersTable() {
     const statusVal = document.getElementById('payment-status-filter').value;
     renderOrdersTable(monthVal, statusVal);
 }
+                let isDebtTableInitialized = false;
+
+        function initDebtTable() {
+            if (!globalData || !globalData.income || !globalData.income.orders) return;
+            const orders = globalData.income.orders;
+            
+            const filterEl = document.getElementById('global-debt-month-filter');
+            filterEl.innerHTML = '<option value="all">За все время</option>';
+            
+            // Собираем месяцы только по заказам, где есть долг
+            const uniqueMonthsMap = new Map();
+            orders.forEach(o => {
+                if (o.debt > 0 && o.monthId && o.monthId !== "Неизвестно") {
+                    uniqueMonthsMap.set(o.monthId, o.monthLabel);
+                }
+            });
+
+            const sortedMonthIds = Array.from(uniqueMonthsMap.keys()).sort();
+            sortedMonthIds.forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id; opt.innerText = uniqueMonthsMap.get(id); 
+                filterEl.appendChild(opt);
+            });
+
+            renderDebtTable();
+        }
+
+        function renderDebtTable() {
+            const monthVal = document.getElementById('global-debt-month-filter').value;
+            const tbody = document.getElementById('global-debt-table-body');
+            tbody.innerHTML = '';
+            
+            // Фильтруем: оставляем только те заказы, где долг больше нуля
+            let filteredOrders = globalData.income.orders.filter(o => o.debt > 0);
+            
+            if (monthVal !== 'all') {
+                filteredOrders = filteredOrders.filter(o => o.monthId === monthVal);
+            }
+
+            let totalDebt = 0;
+            
+            if (filteredOrders.length > 0) {
+                const fragment = document.createDocumentFragment();
+                filteredOrders.forEach(o => {
+                    totalDebt += o.debt;
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="px-5 py-4 whitespace-nowrap">${o.date}</td>
+                        <td class="px-5 py-4 font-semibold text-slate-900 whitespace-nowrap">${o.orderId}</td>
+                        <td class="px-5 py-4 text-xs leading-relaxed text-slate-600">${o.description || '-'}</td>
+                        <td class="px-5 py-4 text-right font-bold text-rose-500 whitespace-nowrap">${formatMoney(o.debt)}</td>
+                    `;
+                    fragment.appendChild(tr);
+                });
+                tbody.appendChild(fragment);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-5 py-8 text-center text-slate-500">Задолженностей нет 🎉</td></tr>`;
+            }
+            
+            document.getElementById('global-debt-sum').innerText = formatMoney(totalDebt);
+        }
     </script>
 </body>
 </html>
